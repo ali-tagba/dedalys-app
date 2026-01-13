@@ -472,6 +472,18 @@ async function main() {
 
     // Helper function to create file structure
     async function createFileStructure(dossierId: string, dossierNumero: string) {
+        // Root file
+        await prisma.dossierFile.create({
+            data: {
+                dossierId,
+                name: 'Memo_Synthese.pdf',
+                type: 'FILE',
+                url: `/uploads/${dossierNumero}/memo.pdf`,
+                mimeType: 'application/pdf',
+                size: 10240,
+            },
+        })
+
         // Root folders
         const pieces = await prisma.dossierFile.create({
             data: {
@@ -683,6 +695,18 @@ async function main() {
     await createFileStructure(dossier4.id, dossier4.numero)
     await createFileStructure(dossier5.id, dossier5.numero)
     await createFileStructure(dossier6.id, dossier6.numero)
+    await createFileStructure(dossier7.id, dossier7.numero)
+    await createFileStructure(dossier8.id, dossier8.numero)
+    await createFileStructure(dossier9.id, dossier9.numero)
+    await createFileStructure(dossier10.id, dossier10.numero)
+    await createFileStructure(dossier11.id, dossier11.numero)
+    await createFileStructure(dossier12.id, dossier12.numero)
+    await createFileStructure(dossier13.id, dossier13.numero)
+    await createFileStructure(dossier14.id, dossier14.numero)
+    await createFileStructure(dossier15.id, dossier15.numero)
+    await createFileStructure(dossier16.id, dossier16.numero)
+    await createFileStructure(dossier17.id, dossier17.numero)
+    await createFileStructure(dossier18.id, dossier18.numero)
 
     console.log('✅ Created 100+ files and folders')
 

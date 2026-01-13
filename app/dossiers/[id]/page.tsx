@@ -3,8 +3,6 @@
 import { useEffect, useState, use } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { useDossierStore } from "@/lib/stores/dossierStore"
-import { useClientStore } from "@/lib/stores/clientStore"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -28,20 +26,20 @@ import {
     AlertCircle
 } from "lucide-react"
 
-// Types helpers
-import { Dossier, DossierFolder, Document } from "@/lib/types/dossier"
-
-const statusConfig = {
+// Status Configuration - matching API values
+const statusConfig: any = {
     EN_COURS: { label: "En cours", color: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
     EN_ATTENTE: { label: "En attente", color: "bg-orange-50 text-orange-700 border-orange-200", icon: AlertCircle },
     CLOTURE: { label: "Clôturé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
+    CLOSTURE: { label: "Clôturé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 }, // Typo fallback
+    TERMINE: { label: "Terminé", color: "bg-slate-50 text-slate-700 border-slate-200", icon: CheckCircle2 },
     ARCHIVE: { label: "Archivé", color: "bg-slate-50 text-slate-700 border-slate-200", icon: Folder }
 }
 
 export default function DossierDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params)
-    const { getDossierById, createFolder, deleteFolder } = useDossierStore()
-    const [dossier, setDossier] = useState<Dossier | undefined>(undefined)
+    const [dossier, setDossier] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
     const [mounted, setMounted] = useState(false)
     const [activeTab, setActiveTab] = useState("documents")
 
@@ -49,32 +47,61 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
+    const fetchDossier = async () => {
+        try {
+            setLoading(true)
+            const response = await fetch(`/api/dossiers/${resolvedParams.id}`)
+            if (!response.ok) {
+                if (response.status === 404) return notFound()
+                throw new Error('Failed to fetch dossier')
+            }
+            const data = await response.json()
+            setDossier(data)
+        } catch (error) {
+            console.error('Error fetching dossier:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         setMounted(true)
-        const d = getDossierById(resolvedParams.id)
-        if (d) setDossier(d)
-    }, [resolvedParams.id, getDossierById])
+        fetchDossier()
+    }, [resolvedParams.id])
 
     if (!mounted) return null
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-200 border-t-blue-600"></div>
+            </div>
+        )
+    }
+
     if (!dossier) return notFound()
 
-    const StatusIcon = statusConfig[dossier.statut].icon
+    // Status Handling with fallback
+    const statusKey = statusConfig[dossier.statut] ? dossier.statut : 'EN_COURS'
+    const StatusConfig = statusConfig[statusKey] || statusConfig['EN_COURS']
+    const StatusIcon = StatusConfig.icon
 
-    // File Manager Logic
-    const folders = dossier.folders || []
-    const documents = dossier.documents || []
+    // File Manager Logic - Mapping from DB flat list to folders/files
+    const allFiles = dossier.files || []
+    const folders = allFiles.filter((f: any) => f.type === 'FOLDER')
+    const documents = allFiles.filter((f: any) => f.type === 'FILE')
 
-    const currentFolders = folders.filter(f => f.parentId === currentFolderId)
-    const currentDocs = documents.filter(d => d.folderId === currentFolderId)
+    const currentFolders = folders.filter((f: any) => f.parentId === currentFolderId)
+    const currentDocs = documents.filter((d: any) => d.parentId === currentFolderId)
 
-    const getCurrentFolder = () => folders.find(f => f.id === currentFolderId)
+    const getCurrentFolder = () => folders.find((f: any) => f.id === currentFolderId)
 
     const getBreadcrumbs = () => {
         const crumbs = []
         let current = getCurrentFolder()
         while (current) {
             crumbs.unshift(current)
-            current = folders.find(f => f.id === current?.parentId)
+            current = folders.find((f: any) => f.id === current?.parentId)
         }
         return crumbs
     }
@@ -99,13 +126,13 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                     </Link>
                     <div className="flex-1">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-slate-900">{dossier.intitule}</h1>
-                            <Badge variant="outline" className={statusConfig[dossier.statut].color}>
+                            <h1 className="text-2xl font-bold text-slate-900">Dossier {dossier.numero}</h1>
+                            <Badge variant="outline" className={StatusConfig.color}>
                                 <StatusIcon className="h-3 w-3 mr-1" />
-                                {statusConfig[dossier.statut].label}
+                                {StatusConfig.label}
                             </Badge>
                         </div>
-                        <p className="text-slate-500 font-mono text-sm mt-1">{dossier.numeroDossier} • {dossier.juridiction.nom}</p>
+                        <p className="text-slate-500 font-mono text-sm mt-1">{dossier.type} • {dossier.juridiction}</p>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline">Modifier</Button>
@@ -184,7 +211,7 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                                 </Button>
                             </div>
                             <div className="h-8 w-px bg-slate-200 mx-2" />
-                            <Button size="sm" variant="outline" onClick={() => createFolder(dossier.id, "Nouveau Dossier", currentFolderId)}>
+                            <Button size="sm" variant="outline">
                                 <Plus className="h-4 w-4 mr-2" /> Dossier
                             </Button>
                             <Button size="sm">
@@ -206,7 +233,7 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                         ) : (
                             <div className={viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" : "space-y-2"}>
                                 {/* Folders */}
-                                {currentFolders.map(folder => (
+                                {currentFolders.map((folder: any) => (
                                     <div
                                         key={folder.id}
                                         onClick={() => setCurrentFolderId(folder.id)}
@@ -226,7 +253,7 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                                 ))}
 
                                 {/* Files */}
-                                {currentDocs.map(doc => (
+                                {currentDocs.map((doc: any) => (
                                     <div
                                         key={doc.id}
                                         className={`
@@ -240,8 +267,8 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                                             </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-slate-700 truncate text-sm">{doc.nom}</p>
-                                            <p className="text-xs text-slate-400 mt-1">{doc.type} • {formatSize(doc.taille)}</p>
+                                            <p className="font-medium text-slate-700 truncate text-sm">{doc.name}</p>
+                                            <p className="text-xs text-slate-400 mt-1">{doc.mimeType?.split('/')[1]?.toUpperCase() || 'FICHIER'} • {formatSize(doc.size)}</p>
                                         </div>
 
                                         {viewMode === "list" && (
@@ -258,6 +285,33 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                 </Card>
             )}
 
+            {/* AUDIENCES TAB */}
+            {activeTab === "audiences" && (
+                <Card className="flex-1 shadow-sm overflow-hidden border-slate-200 p-6">
+                    {dossier.audiences && dossier.audiences.length > 0 ? (
+                        <div className="space-y-4">
+                            {dossier.audiences.map((audience: any) => (
+                                <div key={audience.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-lg hover:bg-slate-50">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-blue-50 rounded-lg flex flex-col items-center justify-center text-blue-700">
+                                            <span className="text-xs font-bold">{new Date(audience.date).getDate()}</span>
+                                            <span className="text-[10px] uppercase">{new Date(audience.date).toLocaleString('default', { month: 'short' })}</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900">{audience.titre}</h4>
+                                            <p className="text-sm text-slate-500">{audience.juridiction || "Tribunal"} • {audience.heure}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant="outline">{audience.statut}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-slate-500">Aucune audience planifiée.</div>
+                    )}
+                </Card>
+            )}
+
             {activeTab === "info" && (
                 <div className="grid grid-cols-3 gap-6">
                     <Card className="col-span-2 p-6">
@@ -265,20 +319,21 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                         <div className="grid grid-cols-2 gap-y-6 gap-x-12">
                             <div>
                                 <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Type d'affaire</label>
-                                <p className="mt-1 font-medium">{dossier.typeAffaire}</p>
+                                <p className="mt-1 font-medium">{dossier.type}</p>
                             </div>
                             <div>
                                 <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Juridiction</label>
-                                <p className="mt-1 font-medium">{dossier.juridiction.nom}</p>
-                                <p className="text-sm text-slate-500">{dossier.juridiction.ville}</p>
+                                <p className="mt-1 font-medium">{dossier.juridiction}</p>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Priorité</label>
-                                <p className="mt-1 font-medium">{dossier.priorite}</p>
+                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Client</label>
+                                <Link href={`/clients/${dossier.clientId}`} className="mt-1 font-medium text-blue-600 hover:underline">
+                                    {dossier.client?.raisonSociale || `${dossier.client?.nom} ${dossier.client?.prenom}`}
+                                </Link>
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Numéro RG</label>
-                                <p className="mt-1 font-medium font-mono">{dossier.juridiction.numeroRG || '-'}</p>
+                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Date d'ouverture</label>
+                                <p className="mt-1 font-medium font-mono">{new Date(dossier.dateOuverture).toLocaleDateString()}</p>
                             </div>
                         </div>
 
@@ -287,25 +342,6 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                             <p className="text-slate-600 leading-relaxed text-sm">{dossier.description || "Aucune description."}</p>
                         </div>
                     </Card>
-
-                    <div className="space-y-6">
-                        <Card className="p-6">
-                            <h3 className="font-semibold text-sm mb-4 uppercase tracking-wider text-slate-500">Parties</h3>
-                            <div className="space-y-4">
-                                {dossier.parties.map((partie, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold">
-                                            {partie.type === "DEMANDEUR" ? "D" : "A"}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium">Client #{partie.clientId.slice(0, 4)}</p>
-                                            <p className="text-xs text-slate-500">{partie.type}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    </div>
                 </div>
             )}
         </div>

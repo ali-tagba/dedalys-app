@@ -118,7 +118,7 @@ export function InvoiceFormDialog({
                 ...data,
                 montantHT: parseFloat(data.montantHT),
                 montantTTC: parseFloat(data.montantTTC),
-                montantPaye: 0,
+                montantPaye: data.statut === 'PAYEE' ? parseFloat(data.montantTTC) : (data.statut === 'PARTIELLE' ? (invoice?.montantPaye || 0) : 0),
             }
 
             const response = await fetch(url, {

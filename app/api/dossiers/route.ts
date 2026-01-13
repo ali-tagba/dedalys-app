@@ -6,6 +6,7 @@ export async function GET() {
         const dossiers = await prisma.dossier.findMany({
             include: {
                 client: true,
+                audiences: true,
                 _count: {
                     select: {
                         audiences: true,

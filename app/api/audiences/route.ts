@@ -7,9 +7,7 @@ export async function GET() {
             include: {
                 client: true,
                 dossier: true,
-                avocatEnCharge: true,
-                avocatSignataire: true,
-                flashCr: true,
+                flashCR: true,
             },
             orderBy: {
                 date: 'asc',

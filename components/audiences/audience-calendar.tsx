@@ -86,12 +86,22 @@ export function AudienceCalendar({ audiences }: AudienceCalendarProps) {
                                             key={event.id}
                                             className={`
                                                 px-2 py-1 rounded text-xs font-medium border cursor-pointer truncate
-                                                ${event.status === 'COMPLETED' ? 'bg-slate-100 text-slate-600 border-slate-200 line-through opacity-70' :
-                                                    event.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                ${event.statut === 'TERMINEE' ? 'bg-slate-100 text-slate-600 border-slate-200 line-through opacity-70' :
+                                                    event.statut === 'ANNULEE' ? 'bg-red-50 text-red-700 border-red-100' :
                                                         'bg-blue-50 text-blue-700 border-blue-100 hover:border-blue-300'}
                                             `}
                                         >
-                                            {format(new Date(event.date), "HH:mm")} {event.title}
+                                            <div className="font-semibold text-slate-900 truncate">
+                                                {format(new Date(event.date), "HH:mm")} <span className="text-slate-600 font-normal">|</span> {event.titre || "Audience"}
+                                            </div>
+                                            {event.client && (
+                                                <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                                                    👤 {event.client.type === 'ENTREPRISE' ? event.client.raisonSociale : `${event.client.nom} ${event.client.prenom}`}
+                                                </div>
+                                            )}
+                                            <div className="flex gap-1 mt-1">
+                                                {event.juridiction && <span className="text-[9px] px-1 py-0.5 bg-white/50 rounded border border-slate-200/50">{event.juridiction}</span>}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

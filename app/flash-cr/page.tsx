@@ -126,7 +126,7 @@ export default function FlashCRPage() {
                                                     Disponible
                                                 </Badge>
                                                 <span className="text-xs font-mono text-slate-400">
-                                                    {format(new Date(cr.dateCreation), "dd MMM yyyy", { locale: fr })}
+                                                    {format(new Date(cr.createdAt), "dd MMM yyyy", { locale: fr })}
                                                 </span>
                                             </div>
 

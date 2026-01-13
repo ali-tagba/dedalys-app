@@ -132,13 +132,13 @@ export default function FacturationPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredInvoices.map((inv) => {
-                                const remaining = inv.amountTTC - inv.amountPaid
-                                const isLate = new Date(inv.dueDate) < new Date() && inv.status !== "PAID"
+                                const remaining = inv.montantTTC - inv.montantPaye
+                                const isLate = inv.dateEcheance ? (new Date(inv.dateEcheance) < new Date() && inv.statut !== "PAYEE") : false
 
                                 return (
                                     <tr key={inv.id} className="hover:bg-blue-50/50 transition-colors group text-sm">
                                         <td className="px-4 py-3 font-medium text-slate-700 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                            {inv.number}
+                                            {inv.numero}
                                         </td>
                                         <td className="px-4 py-3 text-slate-600 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
                                             <div className="flex flex-col">
@@ -148,11 +148,13 @@ export default function FacturationPage() {
                                         </td>
                                         <td className="px-4 py-3 border-r border-transparent group-hover:border-slate-100">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="font-semibold text-slate-800 truncate">{inv.clientId}</span>
+                                                <span className="font-semibold text-slate-800 truncate">
+                                                    {inv.client ? (inv.client.type === 'ENTREPRISE' ? inv.client.raisonSociale : `${inv.client.prenom} ${inv.client.nom}`) : 'Client inconnu'}
+                                                </span>
                                                 <div className="flex gap-2 text-xs text-slate-500">
                                                     {inv.dossierId && (
                                                         <span className="bg-slate-100 px-1.5 py-0.5 rounded truncate max-w-[120px]">
-                                                            {inv.dossierId}
+                                                            {inv.dossier?.numero || inv.dossierId}
                                                         </span>
                                                     )}
                                                     {inv.audienceId && (
@@ -164,13 +166,13 @@ export default function FacturationPage() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono text-slate-500 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                            {formatCurrency(inv.amountHT)}
+                                            {formatCurrency(inv.montantHT)}
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono font-medium text-slate-900 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                            {formatCurrency(inv.amountTTC)}
+                                            {formatCurrency(inv.montantTTC)}
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono text-emerald-600 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                            {formatCurrency(inv.amountPaid)}
+                                            {formatCurrency(inv.montantPaye)}
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono font-bold border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
                                             <span className={remaining > 0 ? "text-red-600" : "text-slate-300"}>
@@ -178,7 +180,7 @@ export default function FacturationPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-center border-r border-transparent group-hover:border-slate-100">
-                                            <StatusBadge status={inv.status} />
+                                            <StatusBadge status={inv.statut} />
                                         </td>
                                         <td className="px-4 py-3 text-center border-r border-transparent group-hover:border-slate-100">
                                             {inv.attachmentUrl ? (

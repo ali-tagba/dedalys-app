@@ -3,16 +3,18 @@ export type AudienceStatus = "UPCOMING" | "COMPLETED" | "CANCELLED" | "POSTPONED
 
 export interface Audience {
     id: string
-    title: string // Nom/Objet de l'audience
+    titre: string | null // Changed from title to match schema
     date: string // ISO Date string
-    juridiction: string
-    avocatId: string // Avocat en charge / "MK" pour Maitre Konan
-    avocatSignataireId?: string // Avocat signataire pour le compte du cabinet
+    heure?: string | null
+    juridiction: string | null
+    avocat: string | null
     clientId: string
     dossierId: string
-    status: AudienceStatus
-    flashCrId?: string // Lien optionnel vers une FlashCR existante
-    notes?: string
+    statut: string // "A_VENIR" | "TERMINEE" | "REPORTEE" | "ANNULEE"
+    notes?: string | null
+    client?: any
+    dossier?: any
+    flashCR?: any
 }
 
 export interface FlashCR {

@@ -6,8 +6,9 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
+        const { id } = await params
         const client = await prisma.client.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 contacts: true,
                 dossiers: {

@@ -6,18 +6,15 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
+        const { id } = await params
         const dossier = await prisma.dossier.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 client: true,
                 files: {
                     orderBy: { createdAt: 'desc' },
                 },
                 audiences: {
-                    include: {
-                        avocatEnCharge: true,
-                        avocatSignataire: true,
-                    },
                     orderBy: { date: 'desc' },
                 },
                 invoices: {

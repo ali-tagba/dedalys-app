@@ -46,6 +46,9 @@ const typeConfig = {
     AUTRE: { label: "Autre", color: "bg-slate-100 text-slate-800" }
 }
 
+type DossierStatus = keyof typeof statusConfig
+type DossierType = keyof typeof typeConfig
+
 export default function DossiersPage() {
     const [dossiers, setDossiers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -215,10 +218,11 @@ export default function DossiersPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {filteredDossiers.map((dossier) => {
-                                            const StatusIcon = statusConfig[dossier.statut].icon
+                                            const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
+                                            const StatusIcon = statusConfig[statusKey].icon
                                             const nextAudience = dossier.audiences
-                                                .filter(a => a.statut === "PLANIFIEE")
-                                                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+                                                .filter((a: any) => a.statut === "PLANIFIEE")
+                                                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
 
                                             return (
                                                 <TableRow key={dossier.id} className="group hover:bg-slate-50/50">
@@ -229,19 +233,19 @@ export default function DossiersPage() {
                                                             </div>
                                                             <div>
                                                                 <div className="font-bold text-slate-900">{dossier.intitule}</div>
-                                                                <div className="text-xs text-slate-500">{dossier.numeroDossier}</div>
+                                                                <div className="text-xs text-slate-500">{dossier.numero}</div>
                                                             </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge variant="secondary" className={typeConfig[dossier.typeAffaire].color}>
-                                                            {typeConfig[dossier.typeAffaire].label}
+                                                        <Badge variant="secondary" className={typeConfig[(dossier.type || 'AUTRE') as DossierType].color}>
+                                                            {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge variant="outline" className={`${statusConfig[dossier.statut].color} flex items-center gap-1 w-fit`}>
+                                                        <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1 w-fit`}>
                                                             <StatusIcon className="h-3 w-3" />
-                                                            {statusConfig[dossier.statut].label}
+                                                            {statusConfig[statusKey].label}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>
@@ -277,10 +281,11 @@ export default function DossiersPage() {
                         {viewMode === "gallery" && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredDossiers.map((dossier) => {
-                                    const StatusIcon = statusConfig[dossier.statut].icon
+                                    const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
+                                    const StatusIcon = statusConfig[statusKey].icon
                                     const nextAudience = dossier.audiences
-                                        .filter(a => a.statut === "PLANIFIEE")
-                                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+                                        .filter((a: any) => a.statut === "PLANIFIEE")
+                                        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
 
                                     return (
                                         <Card key={dossier.id} className="p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex flex-col">
@@ -288,20 +293,20 @@ export default function DossiersPage() {
                                                 <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                                                     <Scale className="h-6 w-6" />
                                                 </div>
-                                                <Badge variant="outline" className={`${statusConfig[dossier.statut].color} flex items-center gap-1`}>
+                                                <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1`}>
                                                     <StatusIcon className="h-3 w-3" />
-                                                    {statusConfig[dossier.statut].label}
+                                                    {statusConfig[statusKey].label}
                                                 </Badge>
                                             </div>
 
                                             <div className="flex-1">
                                                 <h3 className="font-bold text-lg text-slate-900 mb-1">{dossier.intitule}</h3>
-                                                <p className="text-xs text-slate-500 mb-3">{dossier.numeroDossier}</p>
+                                                <p className="text-xs text-slate-500 mb-3">{dossier.numero}</p>
 
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex items-center gap-2">
-                                                        <Badge variant="secondary" className={`${typeConfig[dossier.typeAffaire].color} text-xs`}>
-                                                            {typeConfig[dossier.typeAffaire].label}
+                                                        <Badge variant="secondary" className={`${typeConfig[(dossier.type || 'AUTRE') as DossierType].color} text-xs`}>
+                                                            {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
                                                         </Badge>
                                                     </div>
                                                     <div className="text-slate-600">

@@ -5,7 +5,7 @@ export async function GET() {
     try {
         const clients = await prisma.client.findMany({
             include: {
-                contacts: true,
+                // contacts: true, // Optimized: Removed for list view performance
                 _count: {
                     select: {
                         dossiers: true,
