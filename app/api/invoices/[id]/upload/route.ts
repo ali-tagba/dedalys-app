@@ -5,7 +5,7 @@ import { join } from 'path'
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: any }
 ) {
     try {
         const { id } = await params
