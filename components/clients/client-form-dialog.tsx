@@ -32,7 +32,7 @@ const clientSchema = z.object({
     telephone: z.string().optional(),
     adresse: z.string().optional(),
     ville: z.string().optional(),
-    pays: z.string().default("Côte d'Ivoire"),
+    pays: z.string(),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
