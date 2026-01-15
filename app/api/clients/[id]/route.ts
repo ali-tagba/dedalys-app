@@ -14,6 +14,9 @@ export async function GET(
                 dossiers: {
                     orderBy: { dateOuverture: 'desc' },
                 },
+                audiences: {
+                    orderBy: { date: 'desc' },
+                },
                 invoices: {
                     orderBy: { date: 'desc' },
                 },

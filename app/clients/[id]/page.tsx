@@ -19,7 +19,9 @@ import {
     TrendingUp,
     Plus,
     CheckCircle2,
-    User
+    User,
+    Calendar,
+    FileText
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
@@ -263,6 +265,134 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                                     ) : (
                                         <div className="p-8 text-center bg-slate-50/50">
                                             <p className="text-slate-500">Aucun dossier pour le moment.</p>
+                                        </div>
+                                    )}
+                                </Card>
+                            </section>
+
+                            {/* SECTION 5: AUDIENCES */}
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                        <Calendar className="h-5 w-5 text-blue-600" /> Audiences ({client.audiences?.length || 0})
+                                    </h2>
+                                </div>
+                                <Card className="border-slate-200 shadow-sm overflow-hidden">
+                                    {client.audiences && client.audiences.length > 0 ? (
+                                        <div className="divide-y divide-slate-100">
+                                            {client.audiences.slice(0, 5).map((audience: any) => (
+                                                <div key={audience.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold text-slate-900 text-sm">{audience.titre}</h4>
+                                                            <p className="text-xs text-slate-500 mt-1">
+                                                                {new Date(audience.date).toLocaleDateString('fr-FR', {
+                                                                    weekday: 'short',
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    day: 'numeric'
+                                                                })}
+                                                                {audience.heure && ` à ${audience.heure}`}
+                                                            </p>
+                                                            <p className="text-xs text-slate-400 mt-1">{audience.juridiction}</p>
+                                                        </div>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={
+                                                                audience.statut === "A_VENIR" ? "text-blue-600 bg-blue-50 border-blue-100" :
+                                                                    audience.statut === "TERMINEE" ? "text-emerald-600 bg-emerald-50 border-emerald-100" :
+                                                                        audience.statut === "REPORTEE" ? "text-orange-600 bg-orange-50 border-orange-100" :
+                                                                            "text-slate-600 bg-slate-50 border-slate-100"
+                                                            }>
+                                                            {audience.statut === "A_VENIR" ? "À venir" :
+                                                                audience.statut === "TERMINEE" ? "Terminée" :
+                                                                    audience.statut === "REPORTEE" ? "Reportée" : "Annulée"}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {client.audiences.length > 5 && (
+                                                <div className="p-3 text-center bg-slate-50 border-t border-slate-100">
+                                                    <Link href="/audiences" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                                        Voir toutes les audiences ({client.audiences.length})
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center bg-slate-50/50">
+                                            <p className="text-slate-500">Aucune audience programmée.</p>
+                                        </div>
+                                    )}
+                                </Card>
+                            </section>
+
+                            {/* SECTION 6: FACTURES */}
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-blue-600" /> Factures ({client.invoices?.length || 0})
+                                    </h2>
+                                </div>
+                                <Card className="border-slate-200 shadow-sm overflow-hidden">
+                                    {client.invoices && client.invoices.length > 0 ? (
+                                        <div className="divide-y divide-slate-100">
+                                            {client.invoices.slice(0, 5).map((invoice: any) => {
+                                                const remaining = invoice.montantTTC - invoice.montantPaye
+                                                return (
+                                                    <div key={invoice.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-slate-900 text-sm">{invoice.numero}</h4>
+                                                                <p className="text-xs text-slate-500 mt-1">
+                                                                    {new Date(invoice.date).toLocaleDateString('fr-FR')}
+                                                                </p>
+                                                                <div className="mt-2 space-y-1">
+                                                                    <div className="flex justify-between text-xs">
+                                                                        <span className="text-slate-500">Montant HT:</span>
+                                                                        <span className="font-mono text-slate-700">{formatCurrency(invoice.montantHT)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between text-xs">
+                                                                        <span className="text-slate-500">Montant TTC:</span>
+                                                                        <span className="font-mono font-semibold text-slate-900">{formatCurrency(invoice.montantTTC)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between text-xs">
+                                                                        <span className="text-slate-500">Encaissé:</span>
+                                                                        <span className="font-mono text-emerald-600">{formatCurrency(invoice.montantPaye)}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between text-xs pt-1 border-t border-slate-100">
+                                                                        <span className="text-slate-600 font-medium">Reste à payer:</span>
+                                                                        <span className={`font-mono font-bold ${remaining > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                                                                            {formatCurrency(remaining)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={
+                                                                    invoice.statut === "PAYEE" ? "text-emerald-600 bg-emerald-50 border-emerald-100" :
+                                                                        invoice.statut === "PARTIELLE" ? "text-orange-600 bg-orange-50 border-orange-100" :
+                                                                            "text-red-600 bg-red-50 border-red-100"
+                                                                }>
+                                                                {invoice.statut === "PAYEE" ? "Payée" :
+                                                                    invoice.statut === "PARTIELLE" ? "Partielle" : "Impayée"}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                            {client.invoices.length > 5 && (
+                                                <div className="p-3 text-center bg-slate-50 border-t border-slate-100">
+                                                    <Link href="/facturation" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                                        Voir toutes les factures ({client.invoices.length})
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center bg-slate-50/50">
+                                            <p className="text-slate-500">Aucune facture émise.</p>
                                         </div>
                                     )}
                                 </Card>

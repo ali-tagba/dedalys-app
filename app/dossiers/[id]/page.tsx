@@ -322,6 +322,31 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                                 <p className="mt-1 font-medium">{dossier.type}</p>
                             </div>
                             <div>
+                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Type de Dossier</label>
+                                <p className="mt-1 font-medium">
+                                    {dossier.typeDossier === "CONTENTIEUX" ? "Contentieux" :
+                                        dossier.typeDossier === "PRE_CONTENTIEUX" ? "Pré-contentieux" :
+                                            dossier.typeDossier === "TRANSACTIONNEL" ? "Transactionnel" :
+                                                dossier.typeDossier === "CONSEIL" ? "Conseil" :
+                                                    dossier.typeDossier || "Non spécifié"}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Domaine du Droit</label>
+                                <p className="mt-1 font-medium">
+                                    {dossier.domaineDroit === "TRAVAIL" ? "Droit du travail" :
+                                        dossier.domaineDroit === "CIVIL" ? "Droit civil" :
+                                            dossier.domaineDroit === "IMMOBILIER" ? "Droit immobilier" :
+                                                dossier.domaineDroit === "COMMERCIAL" ? "Droit commercial" :
+                                                    dossier.domaineDroit === "AUTRE" ? "Autres" :
+                                                        dossier.domaineDroit || "Non spécifié"}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Avocat Assigné</label>
+                                <p className="mt-1 font-medium">{dossier.avocatAssigne || "Non assigné"}</p>
+                            </div>
+                            <div>
                                 <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Juridiction</label>
                                 <p className="mt-1 font-medium">{dossier.juridiction}</p>
                             </div>
