@@ -25,9 +25,18 @@ import {
 
 const clientSchema = z.object({
     type: z.enum(["PERSONNE_PHYSIQUE", "PERSONNE_MORALE"]),
+    // Personne Morale fields
     raisonSociale: z.string().optional(),
+    formeJuridique: z.string().optional(),
+    numeroRCCM: z.string().optional(),
+    siegeSocial: z.string().optional(),
+    representantLegal: z.string().optional(),
+    // Personne Physique fields
     nom: z.string().optional(),
     prenom: z.string().optional(),
+    profession: z.string().optional(),
+    pieceIdentite: z.string().optional(),
+    // Common fields
     email: z.string().email().optional().or(z.literal("")),
     telephone: z.string().optional(),
     adresse: z.string().optional(),
@@ -129,21 +138,72 @@ export function ClientFormDialog({
                     </div>
 
                     {clientType === "PERSONNE_MORALE" ? (
-                        <div className="space-y-2">
-                            <Label>Raison Sociale</Label>
-                            <Input {...register("raisonSociale")} />
-                        </div>
+                        <>
+                            <div className="space-y-2">
+                                <Label>Raison Sociale *</Label>
+                                <Input {...register("raisonSociale")} placeholder="Ex: SOTRA SA" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Forme Juridique</Label>
+                                    <Select
+                                        value={watch("formeJuridique") || ""}
+                                        onValueChange={(value) => setValue("formeJuridique", value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sélectionner" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="SARL">SARL</SelectItem>
+                                            <SelectItem value="SA">SA</SelectItem>
+                                            <SelectItem value="SAU">SAU</SelectItem>
+                                            <SelectItem value="SNC">SNC</SelectItem>
+                                            <SelectItem value="SAS">SAS</SelectItem>
+                                            <SelectItem value="Autres">Autres</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Numéro RCCM</Label>
+                                    <Input {...register("numeroRCCM")} placeholder="Ex: CI-ABJ-2015-B-12345" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Siège Social</Label>
+                                <Input {...register("siegeSocial")} placeholder="Adresse du siège social" />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Représentant Légal</Label>
+                                <Input {...register("representantLegal")} placeholder="Nom du représentant légal" />
+                            </div>
+                        </>
                     ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Nom</Label>
-                                <Input {...register("nom")} />
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Nom *</Label>
+                                    <Input {...register("nom")} placeholder="Nom de famille" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Prénom *</Label>
+                                    <Input {...register("prenom")} placeholder="Prénom" />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Prénom</Label>
-                                <Input {...register("prenom")} />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Profession</Label>
+                                    <Input {...register("profession")} placeholder="Ex: Commerçant" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Pièce d'Identité</Label>
+                                    <Input {...register("pieceIdentite")} placeholder="Numéro CNI ou Passeport" />
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
@@ -162,7 +222,7 @@ export function ClientFormDialog({
 
                     <div className="space-y-2">
                         <Label>Adresse</Label>
-                        <Input {...register("adresse")} />
+                        <Input {...register("adresse")} placeholder="Domicile ou adresse" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

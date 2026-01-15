@@ -22,14 +22,39 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+// Liste des juridictions de Côte d'Ivoire
+const JURIDICTIONS = [
+    "Tribunal de première instance d'Abidjan Plateau",
+    "Tribunal de première instance de Yopougon",
+    "Première section du tribunal de Yopougon",
+    "Section du tribunal d'Abobo",
+    "Section du tribunal Marcory",
+    "Section du tribunal de Cocody",
+    "Section du tribunal de Koumassi",
+    "Cour d'appel d'Abidjan",
+    "Cour d'appel de Bouaké",
+    "Cour suprême"
+]
+
+// Liste des avocats fictifs
+const AVOCATS = [
+    "Maître Konan",
+    "Maître Touré Aminata",
+    "Maître Yao Kouadio",
+    "Maître Diallo Mamadou",
+    "Maître Bamba Clarisse"
+]
+
 const audienceSchema = z.object({
     titre: z.string().min(1, "Titre requis"),
     date: z.string().min(1, "Date requise"),
+    heure: z.string().optional(),
+    duree: z.string().optional(),
     juridiction: z.string().min(1, "Juridiction requise"),
+    salleAudience: z.string().optional(),
     clientId: z.string().min(1, "Client requis"),
     dossierId: z.string().min(1, "Dossier requis"),
-    avocatEnChargeId: z.string().min(1, "Avocat en charge requis"),
-    avocatSignataireId: z.string().optional(),
+    avocat: z.string().optional(),
     statut: z.string().optional(),
     notes: z.string().optional(),
 })
@@ -52,7 +77,6 @@ export function AudienceFormDialog({
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<any[]>([])
     const [dossiers, setDossiers] = useState<any[]>([])
-    const [users, setUsers] = useState<any[]>([])
     const isEdit = !!audience
 
     const {
@@ -68,11 +92,11 @@ export function AudienceFormDialog({
         },
     })
 
-    const selectedClientId = watch("clientId")
+    const selectedDossierId = watch("dossierId")
 
     useEffect(() => {
         if (open) {
-            // Fetch clients and users
+            // Fetch clients and dossiers
             Promise.all([
                 fetch('/api/clients').then(res => res.json()),
                 fetch('/api/dossiers').then(res => res.json()),
@@ -82,16 +106,18 @@ export function AudienceFormDialog({
                     setDossiers(dossiersData)
                 })
                 .catch(err => console.error('Error fetching data:', err))
-
-            // Mock user data (in real app, fetch from /api/users)
-            setUsers([{ id: 'user-1', name: 'Maître Konan' }])
         }
     }, [open])
 
-    // Filter dossiers by selected client
-    const filteredDossiers = selectedClientId
-        ? dossiers.filter(d => d.clientId === selectedClientId)
-        : dossiers
+    // Auto-select client when dossier is selected
+    useEffect(() => {
+        if (selectedDossierId) {
+            const selectedDossier = dossiers.find(d => d.id === selectedDossierId)
+            if (selectedDossier) {
+                setValue("clientId", selectedDossier.clientId)
+            }
+        }
+    }, [selectedDossierId, dossiers, setValue])
 
     const onSubmit = async (data: AudienceFormData) => {
         setLoading(true)
@@ -135,132 +161,112 @@ export function AudienceFormDialog({
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Dossier *</Label>
+                        <Select
+                            value={watch("dossierId")}
+                            onValueChange={(value) => setValue("dossierId", value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner un dossier" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {dossiers.map((dossier) => (
+                                    <SelectItem key={dossier.id} value={dossier.id}>
+                                        {dossier.numero} - {clients.find(c => c.id === dossier.clientId)?.type === "PERSONNE_PHYSIQUE"
+                                            ? `${clients.find(c => c.id === dossier.clientId)?.nom} ${clients.find(c => c.id === dossier.clientId)?.prenom}`
+                                            : clients.find(c => c.id === dossier.clientId)?.raisonSociale}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {errors.dossierId && (
+                            <p className="text-sm text-red-600">{errors.dossierId.message}</p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label>Date *</Label>
-                            <Input type="datetime-local" {...register("date")} />
+                            <Input type="date" {...register("date")} />
                             {errors.date && (
                                 <p className="text-sm text-red-600">{errors.date.message}</p>
                             )}
                         </div>
                         <div className="space-y-2">
+                            <Label>Heure</Label>
+                            <Input type="time" {...register("heure")} placeholder="Ex: 14:30" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Durée estimée</Label>
+                            <Input {...register("duree")} placeholder="Ex: 2h" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
                             <Label>Juridiction *</Label>
-                            <Input {...register("juridiction")} placeholder="Ex: TPI Plateau" />
-                            {errors.juridiction && (
-                                <p className="text-sm text-red-600">{errors.juridiction.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Client *</Label>
                             <Select
-                                value={watch("clientId")}
-                                onValueChange={(value) => {
-                                    setValue("clientId", value)
-                                    setValue("dossierId", "") // Reset dossier when client changes
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un client" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {clients.map((client) => (
-                                        <SelectItem key={client.id} value={client.id}>
-                                            {client.type === "PERSONNE_PHYSIQUE"
-                                                ? `${client.nom} ${client.prenom}`
-                                                : client.raisonSociale}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.clientId && (
-                                <p className="text-sm text-red-600">{errors.clientId.message}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Dossier *</Label>
-                            <Select
-                                value={watch("dossierId")}
-                                onValueChange={(value) => setValue("dossierId", value)}
-                                disabled={!selectedClientId}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un dossier" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredDossiers.map((dossier) => (
-                                        <SelectItem key={dossier.id} value={dossier.id}>
-                                            {dossier.numero}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.dossierId && (
-                                <p className="text-sm text-red-600">{errors.dossierId.message}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Avocat en charge *</Label>
-                            <Select
-                                value={watch("avocatEnChargeId")}
-                                onValueChange={(value) => setValue("avocatEnChargeId", value)}
+                                value={watch("juridiction") || ""}
+                                onValueChange={(value) => setValue("juridiction", value)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionner" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {users.map((user) => (
-                                        <SelectItem key={user.id} value={user.id}>
-                                            {user.name}
+                                    {JURIDICTIONS.map((juridiction) => (
+                                        <SelectItem key={juridiction} value={juridiction}>
+                                            {juridiction}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.avocatEnChargeId && (
-                                <p className="text-sm text-red-600">{errors.avocatEnChargeId.message}</p>
+                            {errors.juridiction && (
+                                <p className="text-sm text-red-600">{errors.juridiction.message}</p>
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label>Avocat signataire</Label>
+                            <Label>Salle d'audience</Label>
+                            <Input {...register("salleAudience")} placeholder="Ex: Salle 3" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Avocat assigné</Label>
                             <Select
-                                value={watch("avocatSignataireId")}
-                                onValueChange={(value) => setValue("avocatSignataireId", value)}
+                                value={watch("avocat") || ""}
+                                onValueChange={(value) => setValue("avocat", value)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner (optionnel)" />
+                                    <SelectValue placeholder="Sélectionner un avocat" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {users.map((user) => (
-                                        <SelectItem key={user.id} value={user.id}>
-                                            {user.name}
+                                    {AVOCATS.map((avocat) => (
+                                        <SelectItem key={avocat} value={avocat}>
+                                            {avocat}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Statut</Label>
-                        <Select
-                            value={watch("statut")}
-                            onValueChange={(value) => setValue("statut", value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="A_VENIR">À venir</SelectItem>
-                                <SelectItem value="TERMINEE">Terminée</SelectItem>
-                                <SelectItem value="ANNULEE">Annulée</SelectItem>
-                                <SelectItem value="REPORTEE">Reportée</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                            <Label>Statut</Label>
+                            <Select
+                                value={watch("statut")}
+                                onValueChange={(value) => setValue("statut", value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="A_VENIR">À venir</SelectItem>
+                                    <SelectItem value="TERMINEE">Terminée</SelectItem>
+                                    <SelectItem value="ANNULEE">Annulée</SelectItem>
+                                    <SelectItem value="REPORTEE">Reportée</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="space-y-2">

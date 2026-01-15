@@ -25,14 +25,16 @@ model Client {
   
   // Personne Morale fields
   raisonSociale     String?  // For companies
-  formeJuridique    String?  // "SARL", "SA", "SAS", etc.
+  formeJuridique    String?  // "SARL", "SA", "SAS", "SAU", "SNC", etc.
   numeroRCCM        String?  // Registre du Commerce
+  siegeSocial       String?  // Siège social address
   representantLegal String?  // Legal representative name
   
   // Personne Physique fields
   nom               String?  // For individuals
   prenom            String?  // For individuals
   profession        String?  // Profession for individuals
+  pieceIdentite     String?  // ID card number for individuals
   
   // Common fields
   email             String?
@@ -69,11 +71,14 @@ model Contact {
 
 model Dossier {
   id           String   @id @default(cuid())
-  numero       String   @unique
-  clientId     String
-  type         String   // "CIVIL", "COMMERCIAL", "PENAL", "ADMINISTRATIF"
-  statut       String   @default("EN_COURS") // "EN_COURS", "TERMINE", "EN_ATTENTE", "CLOSTURE"
-  juridiction  String?
+  numero        String   @unique
+  clientId      String
+  type          String   // "CIVIL", "COMMERCIAL", "PENAL", "ADMINISTRATIF"
+  typeDossier   String?  // "CONTENTIEUX", "PRE_CONTENTIEUX", "TRANSACTIONNEL", "CONSEIL"
+  domaineDroit  String?  // "TRAVAIL", "CIVIL", "IMMOBILIER", "COMMERCIAL", "AUTRE"
+  statut        String   @default("EN_COURS") // "EN_COURS", "TERMINE", "EN_ATTENTE", "CLOSTURE"
+  juridiction   String?
+  avocatAssigne String?  // Avocat assigné au dossier
   dateOuverture DateTime @default(now())
   dateCloture   DateTime?
   description   String?
@@ -113,13 +118,15 @@ model Audience {
   id          String    @id @default(cuid())
   clientId    String
   dossierId   String
-  date        DateTime
-  heure       String?   // Time of audience (e.g., "14:30")
-  juridiction String?
-  titre       String?
-  avocat      String?   // Lawyer name (simplified)
-  statut      String    @default("A_VENIR") // "A_VENIR", "TERMINEE", "REPORTEE", "ANNULEE"
-  notes       String?
+  date          DateTime
+  heure         String?   // Time of audience (e.g., "14:30")
+  duree         String?   // Durée estimée (e.g., "2h")
+  juridiction   String?
+  salleAudience String?   // Salle d'audience
+  titre         String?
+  avocat        String?   // Lawyer name (simplified)
+  statut        String    @default("A_VENIR") // "A_VENIR", "TERMINEE", "REPORTEE", "ANNULEE"
+  notes         String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

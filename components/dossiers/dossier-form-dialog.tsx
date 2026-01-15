@@ -22,9 +22,21 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+// Liste des avocats fictifs
+const AVOCATS = [
+    "Maître Konan",
+    "Maître Touré Aminata",
+    "Maître Yao Kouadio",
+    "Maître Diallo Mamadou",
+    "Maître Bamba Clarisse"
+]
+
 const dossierSchema = z.object({
     clientId: z.string().min(1, "Client requis"),
     type: z.string().min(1, "Type requis"),
+    typeDossier: z.string().optional(),
+    domaineDroit: z.string().optional(),
+    avocatAssigne: z.string().optional(),
     statut: z.string().optional(),
     juridiction: z.string().optional(),
     description: z.string().optional(),
@@ -98,7 +110,7 @@ export function DossierFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
                         {isEdit ? "Modifier le dossier" : "Nouveau dossier"}
@@ -149,6 +161,44 @@ export function DossierFormDialog({
                             </Select>
                         </div>
                         <div className="space-y-2">
+                            <Label>Type de Dossier</Label>
+                            <Select
+                                value={watch("typeDossier") || ""}
+                                onValueChange={(value) => setValue("typeDossier", value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="CONTENTIEUX">Contentieux</SelectItem>
+                                    <SelectItem value="PRE_CONTENTIEUX">Pré-contentieux</SelectItem>
+                                    <SelectItem value="TRANSACTIONNEL">Transactionnel</SelectItem>
+                                    <SelectItem value="CONSEIL">Conseil</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Domaine du Droit</Label>
+                            <Select
+                                value={watch("domaineDroit") || ""}
+                                onValueChange={(value) => setValue("domaineDroit", value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="TRAVAIL">Droit du travail</SelectItem>
+                                    <SelectItem value="CIVIL">Droit civil</SelectItem>
+                                    <SelectItem value="IMMOBILIER">Droit immobilier</SelectItem>
+                                    <SelectItem value="COMMERCIAL">Droit commercial</SelectItem>
+                                    <SelectItem value="AUTRE">Autres</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
                             <Label>Statut</Label>
                             <Select
                                 value={watch("statut")}
@@ -168,13 +218,32 @@ export function DossierFormDialog({
                     </div>
 
                     <div className="space-y-2">
+                        <Label>Avocat Assigné</Label>
+                        <Select
+                            value={watch("avocatAssigne") || ""}
+                            onValueChange={(value) => setValue("avocatAssigne", value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner un avocat" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {AVOCATS.map((avocat) => (
+                                    <SelectItem key={avocat} value={avocat}>
+                                        {avocat}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
                         <Label>Juridiction</Label>
-                        <Input {...register("juridiction")} />
+                        <Input {...register("juridiction")} placeholder="Ex: Tribunal de Commerce d'Abidjan" />
                     </div>
 
                     <div className="space-y-2">
                         <Label>Description</Label>
-                        <Input {...register("description")} />
+                        <Input {...register("description")} placeholder="Description du dossier" />
                     </div>
 
                     <DialogFooter>
