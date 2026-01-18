@@ -8,7 +8,8 @@ import {
     FolderOpen,
     Calendar,
     FileText,
-    CreditCard, // Keep CreditCard as Receipt is not imported
+    CreditCard,
+    BookOpen,
     Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -19,7 +20,8 @@ const navigation = [
     { name: "Dossiers", href: "/dossiers", icon: FolderOpen },
     { name: "Audiences", href: "/audiences", icon: Calendar },
     { name: "Flash CR", href: "/flash-cr", icon: FileText },
-    { name: "Facturation", href: "/facturation", icon: CreditCard }, // Changed icon to CreditCard to maintain syntax correctness as Receipt is not imported
+    { name: "Bibliothèque", href: "/bibliotheque", icon: BookOpen },
+    { name: "Facturation", href: "/facturation", icon: CreditCard },
     { name: "Paramètres", href: "/parametres", icon: Settings },
 ]
 
