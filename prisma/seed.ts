@@ -1424,298 +1424,33 @@ Procédure se déroule normalement. Aucun incident particulier.`,
 
     console.log('✅ Created 15 invoices')
 
-    // ========================================
-    // DOCUMENTS - BIBLIOTHÈQUE (20 total)
-    // ========================================
-
-    await prisma.document.createMany({
-        data: [
-            // Jurisprudence
-            {
-                titre: 'Arrêt Cour d\'Appel de Paris - Droit Commercial',
-                categorie: 'JURISPRUDENCE',
-                type: 'ARRET',
-                juridiction: 'Cour d\'Appel de Paris',
-                reference: 'Arrêt n°045/2023',
-                dateDocument: new Date('2023-06-15'),
-                description: 'Arrêt relatif à la rupture abusive de contrat commercial. La Cour confirme la décision de première instance et condamne la société défenderesse à des dommages et intérêts.',
-                tags: 'droit commercial, rupture contrat, dommages intérêts',
-                auteur: 'Cour d\'Appel de Paris',
-                source: 'Recueil de jurisprudence 2023',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Arrêt Cour de Cassation - Droit du Travail',
-                categorie: 'JURISPRUDENCE',
-                type: 'ARRET',
-                juridiction: 'Cour de Cassation',
-                reference: 'Arrêt n°128/2024',
-                dateDocument: new Date('2024-03-20'),
-                description: 'Licenciement abusif - Indemnités de licenciement. La Cour précise les modalités de calcul des indemnités en cas de licenciement sans cause réelle et sérieuse.',
-                tags: 'droit travail, licenciement, indemnités',
-                auteur: 'Cour de Cassation',
-                source: 'Bulletin de la Cour de Cassation 2024',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Jugement TGI Niamey - Succession',
-                categorie: 'JURISPRUDENCE',
-                type: 'JUGEMENT',
-                juridiction: 'Tribunal Judiciaire de Paris',
-                reference: 'Jugement n°234/2023',
-                dateDocument: new Date('2023-11-10'),
-                description: 'Partage successoral - Application du droit coutumier. Le tribunal statue sur le partage des biens entre héritiers en tenant compte des règles coutumières locales.',
-                tags: 'succession, droit coutumier, partage',
-                auteur: 'TGI Niamey',
-                source: 'Archives TGI 2023',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Arrêt Cour d\'Appel - Droit Immobilier',
-                categorie: 'JURISPRUDENCE',
-                type: 'ARRET',
-                juridiction: 'Cour d\'Appel de Paris',
-                reference: 'Arrêt n°089/2024',
-                dateDocument: new Date('2024-05-15'),
-                description: 'Litige de voisinage - Empiètement. La Cour ordonne la démolition des constructions empiétant sur la propriété voisine.',
-                tags: 'immobilier, voisinage, empiètement',
-                auteur: 'Cour d\'Appel de Paris',
-                source: 'Recueil 2024',
-                statut: 'ACTIF',
-            },
-
-            // Décisions de Justice
-            {
-                titre: 'Ordonnance de Référé - Mesures Conservatoires',
-                categorie: 'DECISION_JUSTICE',
-                type: 'ORDONNANCE',
-                juridiction: 'Tribunal de Commerce de Paris',
-                reference: 'Ord. Réf. n°012/2024',
-                dateDocument: new Date('2024-01-25'),
-                description: 'Ordonnance accordant des mesures conservatoires sur les comptes bancaires du débiteur en attente du jugement au fond.',
-                tags: 'référé, mesures conservatoires, saisie',
-                auteur: 'Président du Tribunal de Commerce',
-                source: 'Greffe TC Paris',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Jugement Tribunal de Commerce - Recouvrement',
-                categorie: 'DECISION_JUSTICE',
-                type: 'JUGEMENT',
-                juridiction: 'Tribunal de Commerce de Paris',
-                reference: 'Jugement n°156/2023',
-                dateDocument: new Date('2023-09-30'),
-                description: 'Condamnation au paiement de créances commerciales avec intérêts de retard. Le tribunal fait droit à la demande du créancier.',
-                tags: 'recouvrement, créances, intérêts',
-                auteur: 'Tribunal de Commerce de Paris',
-                source: 'Archives TC 2023',
-                statut: 'ACTIF',
-            },
-
-            // Doctrine
-            {
-                titre: 'Le Droit Commercial en France - Analyse Pratique',
-                categorie: 'DOCTRINE',
-                type: 'ARTICLE',
+    titre: 'Procédures Devant les Juridictions Françaises',
+        categorie: 'AUTRE',
+            type: 'MEMOIRE',
                 juridiction: null,
-                reference: null,
-                dateDocument: new Date('2023-12-01'),
-                description: 'Article de doctrine analysant les évolutions récentes du droit commercial français, notamment en matière de contrats commerciaux et de sociétés.',
-                tags: 'droit commercial, doctrine, analyse',
-                auteur: 'Dr. Pierre Durand',
-                source: 'Revue Française de Droit, Vol. 15',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'La Protection du Consommateur en France',
-                categorie: 'DOCTRINE',
-                type: 'ARTICLE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-02-15'),
-                description: 'Étude approfondie sur les mécanismes de protection du consommateur dans le droit français, avec comparaisons européennes.',
-                tags: 'consommateur, protection, étude',
-                auteur: 'Prof. Sophie Martin',
-                source: 'Revue de Droit Européen',
-                statut: 'ACTIF',
-            },
-
-            // Modèles
-            {
-                titre: 'Modèle de Contrat de Prestation de Services',
-                categorie: 'MODELE',
-                type: 'CONTRAT',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-01-10'),
-                description: 'Modèle type de contrat de prestation de services adapté au droit français, avec clauses standards et clauses optionnelles.',
-                tags: 'modèle, contrat, prestation services',
-                auteur: 'Cabinet Dedalys',
-                source: 'Bibliothèque interne',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Modèle de Statuts de SARL',
-                categorie: 'MODELE',
-                type: 'CONTRAT',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-01-15'),
-                description: 'Modèle complet de statuts pour la création d\'une SARL en France, conforme au Code de commerce français.',
-                tags: 'modèle, statuts, SARL, France',
-                auteur: 'Cabinet Dedalys',
-                source: 'Bibliothèque interne',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Modèle de Mise en Demeure',
-                categorie: 'MODELE',
-                type: 'PROCEDURE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-02-01'),
-                description: 'Modèle de lettre de mise en demeure pour recouvrement de créances, avec variantes selon les situations.',
-                tags: 'modèle, mise en demeure, recouvrement',
-                auteur: 'Cabinet Dedalys',
-                source: 'Bibliothèque interne',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Modèle d\'Assignation en Justice',
-                categorie: 'MODELE',
-                type: 'PROCEDURE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-02-10'),
-                description: 'Modèle type d\'assignation devant le Tribunal de Commerce de Paris, avec mentions obligatoires.',
-                tags: 'modèle, assignation, procédure',
-                auteur: 'Cabinet Dedalys',
-                source: 'Bibliothèque interne',
-                statut: 'ACTIF',
-            },
-
-            // Documents Internes
-            {
-                titre: 'Guide Procédure Interne - Gestion des Dossiers',
-                categorie: 'INTERNE',
-                type: 'NOTE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-01-05'),
-                description: 'Guide interne détaillant les procédures de gestion des dossiers clients, de l\'ouverture à la clôture.',
-                tags: 'procédure interne, gestion dossiers',
-                auteur: 'Maître Jean Dupont',
-                source: 'Cabinet Dedalys',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Barème Honoraires 2024',
-                categorie: 'INTERNE',
-                type: 'NOTE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2024-01-01'),
-                description: 'Barème des honoraires du cabinet pour l\'année 2024, par type de prestation et niveau de complexité.',
-                tags: 'honoraires, tarifs, barème',
-                auteur: 'Cabinet Dedalys',
-                source: 'Direction',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Charte Qualité du Cabinet',
-                categorie: 'INTERNE',
-                type: 'NOTE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2023-12-15'),
-                description: 'Charte qualité définissant les engagements du cabinet envers ses clients et les standards de service.',
-                tags: 'qualité, charte, engagements',
-                auteur: 'Cabinet Dedalys',
-                source: 'Direction',
-                statut: 'ACTIF',
-            },
-
-            // Autres
-            {
-                titre: 'Code OHADA - Acte Uniforme Droit Commercial',
-                categorie: 'AUTRE',
-                type: 'ARTICLE',
-                juridiction: null,
-                reference: 'OHADA',
-                dateDocument: new Date('2010-12-15'),
-                description: 'Acte uniforme relatif au droit commercial général de l\'OHADA, applicable en France.',
-                tags: 'OHADA, droit commercial, code',
-                auteur: 'OHADA',
-                source: 'Journal Officiel OHADA',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Loi sur les Sociétés Commerciales en France',
-                categorie: 'AUTRE',
-                type: 'ARTICLE',
-                juridiction: null,
-                reference: 'Loi n°2018-045',
-                dateDocument: new Date('2018-07-20'),
-                description: 'Loi régissant la création, le fonctionnement et la dissolution des sociétés commerciales en France.',
-                tags: 'loi, sociétés commerciales, France',
-                auteur: 'Assemblée Nationale',
-                source: 'Journal Officiel',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Code du Travail Français - Version Consolidée',
-                categorie: 'AUTRE',
-                type: 'ARTICLE',
-                juridiction: null,
-                reference: 'Loi n°2012-045',
-                dateDocument: new Date('2012-11-01'),
-                description: 'Version consolidée du Code du Travail de France avec toutes les modifications jusqu\'en 2024.',
-                tags: 'code travail, France, législation',
-                auteur: 'République Française',
-                source: 'Journal Officiel',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Guide Pratique - Création d\'Entreprise en France',
-                categorie: 'AUTRE',
-                type: 'NOTE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2023-10-01'),
-                description: 'Guide pratique détaillant toutes les étapes de création d\'une entreprise en France, avec formalités et délais.',
-                tags: 'création entreprise, guide, formalités',
-                auteur: 'Chambre de Commerce de Paris',
-                source: 'Chambre de Commerce',
-                statut: 'ACTIF',
-            },
-            {
-                titre: 'Procédures Devant les Juridictions Françaises',
-                categorie: 'AUTRE',
-                type: 'MEMOIRE',
-                juridiction: null,
-                reference: null,
-                dateDocument: new Date('2023-05-15'),
-                description: 'Mémoire détaillant les procédures civiles et commerciales devant les différentes juridictions de France.',
-                tags: 'procédure, juridictions, France',
-                auteur: 'Ordre des Avocats de Paris',
-                source: 'Ordre des Avocats',
-                statut: 'ACTIF',
+                    reference: null,
+                        dateDocument: new Date('2023-05-15'),
+                            description: 'Mémoire détaillant les procédures civiles et commerciales devant les différentes juridictions de France.',
+                                tags: 'procédure, juridictions, France',
+                                    auteur: 'Ordre des Avocats de Paris',
+                                        source: 'Ordre des Avocats',
+                                            statut: 'ACTIF',
             },
         ],
     })
 
-    console.log('✅ Created 20 documents for bibliotheque')
+console.log('✅ Created 20 documents for bibliotheque')
 
-    console.log('🎉 Database seeding completed successfully for Dedalys!')
-    console.log('📊 Summary:')
-    console.log('   - 1 user (lawyer)')
-    console.log('   - 8 clients (4 companies, 4 individuals)')
-    console.log('   - 18 dossiers')
-    console.log('   - 100+ files and folders')
-    console.log('   - 25 audiences (10 past, 15 future)')
-    console.log('   - 10 Flash CR')
-    console.log('   - 15 invoices')
-    console.log('   - 20 documents (bibliothèque)')
+console.log('🎉 Database seeding completed successfully for Dedalys!')
+console.log('📊 Summary:')
+console.log('   - 1 user (lawyer)')
+console.log('   - 8 clients (4 companies, 4 individuals)')
+console.log('   - 18 dossiers')
+console.log('   - 100+ files and folders')
+console.log('   - 25 audiences (10 past, 15 future)')
+console.log('   - 10 Flash CR')
+console.log('   - 15 invoices')
+console.log('   - 20 documents (bibliothèque)')
 }
 
 main()
