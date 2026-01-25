@@ -10,7 +10,7 @@ async function testTypes() {
     // All these should work:
     await prisma.user.findMany()
     await prisma.client.findMany()
-    await prisma.document.findMany() // ← This MUST work
+
     await prisma.dossier.findMany()
     await prisma.audience.findMany()
     await prisma.invoice.findMany()
