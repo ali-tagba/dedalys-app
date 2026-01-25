@@ -191,29 +191,4 @@ model Invoice {
   @@index([date])
 }
 
-model Document {
-  id          String   @id @default(cuid())
-  titre       String
-  categorie   String   // "JURISPRUDENCE", "DECISION_JUSTICE", "DOCTRINE", "MODELE", "INTERNE", "AUTRE"
-  type        String?  // "ARRET", "JUGEMENT", "ORDONNANCE", "ARTICLE", "MEMOIRE", etc.
-  juridiction String?  // Juridiction concernée
-  reference   String?  // Référence du document (ex: arrêt n°...)
-  dateDocument DateTime? // Date du document/décision
-  description String?  // Description/résumé
-  tags        String?  // Tags séparés par virgules pour recherche
-  fileUrl     String?  // URL du fichier uploadé
-  fileName    String?  // Nom du fichier original
-  fileSize    Int?     // Taille en bytes
-  mimeType    String?  // Type MIME du fichier
-  auteur      String?  // Auteur du document
-  source      String?  // Source du document
-  notes       String?  // Notes internes
-  statut      String   @default("ACTIF") // "ACTIF", "ARCHIVE"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  @@index([categorie])
-  @@index([type])
-  @@index([dateDocument])
-  @@index([statut])
-}

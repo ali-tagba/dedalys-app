@@ -9,7 +9,6 @@ import {
     Calendar,
     FileText,
     CreditCard,
-    BookOpen,
     Settings
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -20,7 +19,6 @@ const navigation = [
     { name: "Dossiers", href: "/dossiers", icon: FolderOpen },
     { name: "Audiences", href: "/audiences", icon: Calendar },
     { name: "Flash CR", href: "/flash-cr", icon: FileText },
-    { name: "Bibliothèque", href: "/bibliotheque", icon: BookOpen },
     { name: "Facturation", href: "/facturation", icon: CreditCard },
     { name: "Paramètres", href: "/parametres", icon: Settings },
 ]
