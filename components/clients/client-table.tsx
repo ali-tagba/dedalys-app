@@ -5,7 +5,6 @@ import { Client } from "@/lib/types/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-    Table,
     TableBody,
     TableCell,
     TableHead,
@@ -23,7 +22,7 @@ export function ClientTable({ clients, getDossiersCount }: ClientTableProps) {
     return (
         <div className="h-full w-full overflow-auto relative custom-scrollbar">
             {/* Force table to have a minimum width to ensure horizontal scroll works on small screens */}
-            <Table className="min-w-[1400px]">
+            <table className="w-full caption-bottom text-sm min-w-[1400px]">
                 <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-sm">
                     <TableRow className="hover:bg-slate-50 border-b border-slate-200">
                         <TableHead className="w-[80px] pl-6">Type</TableHead>
@@ -128,7 +127,7 @@ export function ClientTable({ clients, getDossiersCount }: ClientTableProps) {
                         )
                     })}
                 </TableBody>
-            </Table>
+            </table>
         </div>
     )
 }
