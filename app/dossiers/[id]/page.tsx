@@ -23,11 +23,22 @@ import {
     Trash2,
     Clock,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Edit2,
+    Palette
 } from "lucide-react"
 import { ModernFolderIcon, FolderColor } from "@/components/ui/modern-folder-icon"
-import { FolderContextMenu } from "@/components/dossiers/folder-context-menu"
 import { RenameFolderDialog } from "@/components/dossiers/rename-folder-dialog"
+import { ColorPicker } from "@/components/dossiers/color-picker"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 // Status Configuration - matching API values
 const statusConfig: any = {
@@ -276,21 +287,17 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                             <div className={viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" : "space-y-2"}>
                                 {/* Folders */}
                                 {currentFolders.map((folder: any) => (
-                                    <FolderContextMenu
+                                    <div
                                         key={folder.id}
-                                        onRename={() => {
-                                            setSelectedFolder(folder)
-                                            setRenameDialogOpen(true)
-                                        }}
-                                        onColorChange={(color) => handleColorChange(folder.id, color)}
-                                        currentColor={(folder.color as FolderColor) || 'blue'}
+                                        className={`
+                                            group relative cursor-pointer rounded-xl border-2 border-transparent hover:border-blue-300 hover:bg-gradient-to-br hover:from-blue-50 hover:to-transparent transition-all duration-200 hover:shadow-lg
+                                            ${viewMode === "grid" ? "p-4 flex flex-col items-center text-center pb-6" : "p-3 flex items-center gap-3 border-slate-100 bg-white"}
+                                        `}
                                     >
+                                        {/* Main clickable area to open folder */}
                                         <div
                                             onClick={() => setCurrentFolderId(folder.id)}
-                                            className={`
-                                                group cursor-pointer rounded-xl border-2 border-transparent hover:border-blue-300 hover:bg-gradient-to-br hover:from-blue-50 hover:to-transparent transition-all duration-200 hover:shadow-lg
-                                                ${viewMode === "grid" ? "p-4 flex flex-col items-center text-center pb-6" : "p-3 flex items-center gap-3 border-slate-100 bg-white"}
-                                            `}
+                                            className="flex-1 flex flex-col items-center w-full"
                                         >
                                             <div className={viewMode === "grid" ? "mb-3 transform group-hover:scale-110 transition-transform duration-200" : ""}>
                                                 <ModernFolderIcon
@@ -298,12 +305,54 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                                                     size={viewMode === "grid" ? "large" : "small"}
                                                 />
                                             </div>
-                                            <div className="flex-1 min-w-0 text-left">
+                                            <div className="flex-1 min-w-0 text-left w-full">
                                                 <p className="font-semibold text-slate-800 truncate text-sm group-hover:text-blue-700 transition-colors">{folder.name}</p>
                                                 {viewMode === "list" && <p className="text-xs text-slate-400">Dossier</p>}
                                             </div>
                                         </div>
-                                    </FolderContextMenu>
+
+                                        {/* Three dots menu button */}
+                                        <div className={`absolute ${viewMode === "grid" ? "top-2 right-2" : "right-2"}`}>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className={`h-8 w-8 rounded-full hover:bg-white/80 backdrop-blur-sm ${viewMode === "grid" ? "opacity-0 group-hover:opacity-100" : "opacity-70 hover:opacity-100"} transition-opacity`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4 text-slate-600" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48">
+                                                    <DropdownMenuItem
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setSelectedFolder(folder)
+                                                            setRenameDialogOpen(true)
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Edit2 className="mr-2 h-4 w-4" />
+                                                        <span>Renommer</span>
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSub>
+                                                        <DropdownMenuSubTrigger className="cursor-pointer">
+                                                            <Palette className="mr-2 h-4 w-4" />
+                                                            <span>Changer la couleur</span>
+                                                        </DropdownMenuSubTrigger>
+                                                        <DropdownMenuSubContent className="p-0">
+                                                            <ColorPicker
+                                                                selectedColor={(folder.color as FolderColor) || 'blue'}
+                                                                onColorSelect={(color) => handleColorChange(folder.id, color)}
+                                                            />
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuSub>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
                                 ))}
 
                                 {/* Files */}
