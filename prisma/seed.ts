@@ -538,6 +538,7 @@ async function main() {
                 dossierId,
                 name: 'Pièces',
                 type: 'FOLDER',
+                // @ts-ignore
                 color: 'blue',
             },
         })
@@ -547,6 +548,7 @@ async function main() {
                 dossierId,
                 name: 'Correspondances',
                 type: 'FOLDER',
+                // @ts-ignore
                 color: 'green',
             },
         })
@@ -556,6 +558,7 @@ async function main() {
                 dossierId,
                 name: 'Procédures',
                 type: 'FOLDER',
+                // @ts-ignore
                 color: 'orange',
             },
         })
@@ -565,6 +568,7 @@ async function main() {
                 dossierId,
                 name: 'Décisions',
                 type: 'FOLDER',
+                // @ts-ignore
                 color: 'purple',
             },
         })
@@ -1424,33 +1428,18 @@ Procédure se déroule normalement. Aucun incident particulier.`,
 
     console.log('✅ Created 15 invoices')
 
-    titre: 'Procédures Devant les Juridictions Françaises',
-        categorie: 'AUTRE',
-            type: 'MEMOIRE',
-                juridiction: null,
-                    reference: null,
-                        dateDocument: new Date('2023-05-15'),
-                            description: 'Mémoire détaillant les procédures civiles et commerciales devant les différentes juridictions de France.',
-                                tags: 'procédure, juridictions, France',
-                                    auteur: 'Ordre des Avocats de Paris',
-                                        source: 'Ordre des Avocats',
-                                            statut: 'ACTIF',
-            },
-        ],
-    })
 
-console.log('✅ Created 20 documents for bibliotheque')
 
-console.log('🎉 Database seeding completed successfully for Dedalys!')
-console.log('📊 Summary:')
-console.log('   - 1 user (lawyer)')
-console.log('   - 8 clients (4 companies, 4 individuals)')
-console.log('   - 18 dossiers')
-console.log('   - 100+ files and folders')
-console.log('   - 25 audiences (10 past, 15 future)')
-console.log('   - 10 Flash CR')
-console.log('   - 15 invoices')
-console.log('   - 20 documents (bibliothèque)')
+    console.log('🎉 Database seeding completed successfully for Dedalys!')
+    console.log('📊 Summary:')
+    console.log('   - 1 user (lawyer)')
+    console.log('   - 8 clients (4 companies, 4 individuals)')
+    console.log('   - 18 dossiers')
+    console.log('   - 100+ files and folders')
+    console.log('   - 25 audiences (10 past, 15 future)')
+    console.log('   - 10 Flash CR')
+    console.log('   - 15 invoices')
+    console.log('   - 20 documents (bibliothèque)')
 }
 
 main()
