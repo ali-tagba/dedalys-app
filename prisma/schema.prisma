@@ -100,6 +100,7 @@ model DossierFile {
   parentId  String?  // For nested folders
   name      String
   type      String   // "FOLDER" | "FILE"
+  color     String?  // Color for folders (blue, red, green, orange, purple, yellow, pink, gray)
   url       String?  // For actual files
   mimeType  String?
   size      Int?     // File size in bytes

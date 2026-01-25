@@ -25,6 +25,9 @@ import {
     CheckCircle2,
     AlertCircle
 } from "lucide-react"
+import { ModernFolderIcon, FolderColor } from "@/components/ui/modern-folder-icon"
+import { FolderContextMenu } from "@/components/dossiers/folder-context-menu"
+import { RenameFolderDialog } from "@/components/dossiers/rename-folder-dialog"
 
 // Status Configuration - matching API values
 const statusConfig: any = {
@@ -46,6 +49,10 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
     // File Manager State
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+
+    // Rename/Color State
+    const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+    const [selectedFolder, setSelectedFolder] = useState<any | null>(null)
 
     const fetchDossier = async () => {
         try {
@@ -112,6 +119,41 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
         const sizes = ["B", "KB", "MB", "GB"]
         const i = Math.floor(Math.log(bytes) / Math.log(k))
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+    }
+
+    const handleRenameFolder = async (newName: string) => {
+        if (!selectedFolder) return
+
+        try {
+            const response = await fetch(`/api/dossiers/${resolvedParams.id}/files/${selectedFolder.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            })
+
+            if (!response.ok) throw new Error('Erreur lors du renommage')
+
+            await fetchDossier()
+        } catch (error) {
+            console.error('Error renaming folder:', error)
+            throw error
+        }
+    }
+
+    const handleColorChange = async (folderId: string, color: FolderColor) => {
+        try {
+            const response = await fetch(`/api/dossiers/${resolvedParams.id}/files/${folderId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ color })
+            })
+
+            if (!response.ok) throw new Error('Erreur lors du changement de couleur')
+
+            await fetchDossier()
+        } catch (error) {
+            console.error('Error changing color:', error)
+        }
     }
 
     return (
@@ -234,22 +276,34 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                             <div className={viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" : "space-y-2"}>
                                 {/* Folders */}
                                 {currentFolders.map((folder: any) => (
-                                    <div
+                                    <FolderContextMenu
                                         key={folder.id}
-                                        onClick={() => setCurrentFolderId(folder.id)}
-                                        className={`
-                                            group cursor-pointer rounded-xl border border-transparent hover:border-blue-200 hover:bg-blue-50/50 transition-all
-                                            ${viewMode === "grid" ? "p-4 flex flex-col items-center text-center pb-6" : "p-3 flex items-center gap-3 border-slate-100 bg-slate-50/30"}
-                                        `}
+                                        onRename={() => {
+                                            setSelectedFolder(folder)
+                                            setRenameDialogOpen(true)
+                                        }}
+                                        onColorChange={(color) => handleColorChange(folder.id, color)}
+                                        currentColor={(folder.color as FolderColor) || 'blue'}
                                     >
-                                        <div className={viewMode === "grid" ? "mb-3" : ""}>
-                                            <Folder className={`text-blue-500 fill-blue-500/20 ${viewMode === "grid" ? "h-12 w-12" : "h-5 w-5"}`} />
+                                        <div
+                                            onClick={() => setCurrentFolderId(folder.id)}
+                                            className={`
+                                                group cursor-pointer rounded-xl border-2 border-transparent hover:border-blue-300 hover:bg-gradient-to-br hover:from-blue-50 hover:to-transparent transition-all duration-200 hover:shadow-lg
+                                                ${viewMode === "grid" ? "p-4 flex flex-col items-center text-center pb-6" : "p-3 flex items-center gap-3 border-slate-100 bg-white"}
+                                            `}
+                                        >
+                                            <div className={viewMode === "grid" ? "mb-3 transform group-hover:scale-110 transition-transform duration-200" : ""}>
+                                                <ModernFolderIcon
+                                                    color={(folder.color as FolderColor) || 'blue'}
+                                                    size={viewMode === "grid" ? "large" : "small"}
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <p className="font-semibold text-slate-800 truncate text-sm group-hover:text-blue-700 transition-colors">{folder.name}</p>
+                                                {viewMode === "list" && <p className="text-xs text-slate-400">Dossier</p>}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0 text-left">
-                                            <p className="font-medium text-slate-700 truncate text-sm">{folder.name}</p>
-                                            {viewMode === "list" && <p className="text-xs text-slate-400">Dossier</p>}
-                                        </div>
-                                    </div>
+                                    </FolderContextMenu>
                                 ))}
 
                                 {/* Files */}
@@ -283,6 +337,16 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                         )}
                     </div>
                 </Card>
+            )}
+
+            {/* Rename Dialog */}
+            {selectedFolder && (
+                <RenameFolderDialog
+                    open={renameDialogOpen}
+                    onOpenChange={setRenameDialogOpen}
+                    currentName={selectedFolder.name}
+                    onRename={handleRenameFolder}
+                />
             )}
 
             {/* AUDIENCES TAB */}

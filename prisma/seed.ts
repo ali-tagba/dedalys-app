@@ -538,6 +538,7 @@ async function main() {
                 dossierId,
                 name: 'Pièces',
                 type: 'FOLDER',
+                color: 'blue',
             },
         })
 
@@ -546,6 +547,7 @@ async function main() {
                 dossierId,
                 name: 'Correspondances',
                 type: 'FOLDER',
+                color: 'green',
             },
         })
 
@@ -554,6 +556,7 @@ async function main() {
                 dossierId,
                 name: 'Procédures',
                 type: 'FOLDER',
+                color: 'orange',
             },
         })
 
@@ -562,6 +565,7 @@ async function main() {
                 dossierId,
                 name: 'Décisions',
                 type: 'FOLDER',
+                color: 'purple',
             },
         })
 
