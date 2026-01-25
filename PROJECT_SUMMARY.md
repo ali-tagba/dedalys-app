@@ -1,4 +1,4 @@
-# 📦 KadriLex - Projet Complet et Prêt au Déploiement
+# 📦 Dedalys - Projet Complet et Prêt au Déploiement
 
 ## 🎯 Statut : ✅ 100% TERMINÉ
 
@@ -9,11 +9,11 @@ Version : 1.0.0
 
 ## 📊 Résumé du Projet
 
-**KadriLex** est une solution complète de gestion pour cabinets juridiques, spécialement adaptée au contexte nigérien (Niger/Niamey).
+**Dedalys** est une solution complète de gestion pour cabinets juridiques, spécialement adaptée au contexte nigérien (France).
 
 ### Origine
 - **Projet source** : Dedalys (Côte d'Ivoire)
-- **Nouveau projet** : KadriLex (Niger)
+- **Nouveau projet** : Dedalys (France)
 - **Statut** : Projet indépendant avec branding et données localisées
 
 ---
@@ -60,7 +60,7 @@ Version : 1.0.0
 
 ---
 
-## 🌍 Localisation Niger/Niamey
+## 🌍 Localisation France
 
 ### Entreprises Fictives
 - **SONITEL** - Société Nigérienne des Télécommunications
@@ -118,7 +118,7 @@ Version : 1.0.0
 ## 📁 Structure du Projet
 
 ```
-kadrilex/
+Dedalys/
 ├── app/
 │   ├── api/
 │   │   ├── audiences/
@@ -173,8 +173,8 @@ kadrilex/
 
 ### Pré-déploiement ✅
 - [x] Code complet et fonctionnel
-- [x] Branding KadriLex appliqué
-- [x] Données Niger/Niamey localisées
+- [x] Branding Dedalys appliqué
+- [x] Données France localisées
 - [x] Module Bibliothèque ajouté
 - [x] Git initialisé et commits créés
 - [x] Prisma client généré
@@ -196,13 +196,13 @@ kadrilex/
 
 ### Étape 1 : GitHub (5 min)
 1. Créer repo sur https://github.com/new
-2. Nom : `kadrilex`
+2. Nom : `Dedalys`
 3. Private ou Public
 4. Ne pas initialiser avec README
 
 ### Étape 2 : Push Code (2 min)
 ```bash
-git remote add origin https://github.com/YOUR-USERNAME/kadrilex.git
+git remote add origin https://github.com/YOUR-USERNAME/Dedalys.git
 git push -u origin main
 ```
 
@@ -300,11 +300,11 @@ npx prisma db seed
 
 ## 🏆 Résultat Final
 
-**KadriLex est une application professionnelle, complète et prête pour production.**
+**Dedalys est une application professionnelle, complète et prête pour production.**
 
 - ✅ 6 modules fonctionnels
 - ✅ Interface moderne et intuitive
-- ✅ Données localisées Niger/Niamey
+- ✅ Données localisées France
 - ✅ Code propre et maintenable
 - ✅ Documentation complète
 - ✅ Prêt au déploiement
@@ -315,4 +315,5 @@ npx prisma db seed
 **Version** : 1.0.0  
 **Statut** : ✅ PRÊT POUR DÉPLOIEMENT
 
-🎉 **Le projet KadriLex est terminé et prêt à être présenté au client !**
+🎉 **Le projet Dedalys est terminé et prêt à être présenté au client !**
+

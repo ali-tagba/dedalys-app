@@ -263,3 +263,4 @@ Pour toute question concernant ce projet, veuillez contacter l'équipe de dével
 ---
 
 **Développé avec ❤️ pour les cabinets juridiques d'Afrique francophone**
+

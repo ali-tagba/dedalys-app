@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "KadriLex - Gestion de Cabinet Juridique",
-  description: "Solution complète de gestion pour cabinets juridiques au Niger",
+  title: "Dedalys - Gestion de Cabinet Juridique",
+  description: "Solution complète de gestion pour cabinets juridiques",
 };
 
 export default function RootLayout({

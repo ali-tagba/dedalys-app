@@ -71,3 +71,4 @@ Une fois ces étapes terminées :
 2. Vous aurez une URL du type `https://dedalys-app.vercel.app`.
 3. Vous pourrez l'envoyer à vos 4-5 testeurs.
 4. Ils pourront créer des clients, des dossiers, etc., et tout sera sauvegardé en temps réel, même si votre PC est éteint ! 🎉
+

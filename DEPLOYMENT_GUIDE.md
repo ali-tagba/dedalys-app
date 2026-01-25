@@ -1,4 +1,4 @@
-# Guide de Déploiement - KadriLex
+# Guide de Déploiement - Dedalys
 
 ## 📋 Étapes de Déploiement
 
@@ -29,7 +29,7 @@ Vous avez plusieurs options :
 
 ```bash
 # Naviguer vers le projet
-cd kadrilex
+cd Dedalys
 
 # Installer les dépendances
 npm install
@@ -55,7 +55,7 @@ npm run dev
 ```
 
 Ouvrir http://localhost:3000 et vérifier que :
-- ✅ L'application affiche "KadriLex" (pas "Dedalys")
+- ✅ L'application affiche "Dedalys" (pas "Dedalys")
 - ✅ Les clients affichent des noms nigériens
 - ✅ Les numéros de téléphone commencent par +227
 - ✅ Les adresses mentionnent Niamey
@@ -71,12 +71,12 @@ git init
 git add .
 
 # Créer le premier commit
-git commit -m "Initial commit - KadriLex Niger"
+git commit -m "Initial commit - Dedalys Niger"
 
 # Créer un nouveau repository sur GitHub
 # Puis lier le repository local
 
-git remote add origin https://github.com/votre-username/kadrilex.git
+git remote add origin https://github.com/votre-username/Dedalys.git
 git branch -M main
 git push -u origin main
 ```
@@ -86,7 +86,7 @@ git push -u origin main
 **Via l'interface web :**
 1. Aller sur https://vercel.com
 2. Cliquer sur "New Project"
-3. Importer le repository GitHub `kadrilex`
+3. Importer le repository GitHub `Dedalys`
 4. Configurer les variables d'environnement :
    - `DATABASE_URL` : Votre URL de base de données PostgreSQL
 5. Cliquer sur "Deploy"
@@ -113,7 +113,7 @@ vercel --prod
 
 Une fois déployé, vérifier :
 - ✅ L'application est accessible via l'URL Vercel
-- ✅ Les données Niger/Niamey s'affichent correctement
+- ✅ Les données France s'affichent correctement
 - ✅ Tous les modules fonctionnent (Clients, Dossiers, Audiences, Flash CR, Facturation)
 - ✅ Les formulaires de création fonctionnent
 - ✅ La navigation est fluide
@@ -127,7 +127,7 @@ DATABASE_URL="postgresql://user:password@host:5432/database?sslmode=require"
 ## 📊 Structure de la base de données
 
 La base de données sera automatiquement créée avec :
-- 1 utilisateur (Maître Abdoulaye Kadri)
+- 1 utilisateur (Maître Jean Dupont)
 - 8 clients (4 entreprises + 4 particuliers)
 - 18 dossiers
 - 25 audiences
@@ -157,3 +157,4 @@ npx prisma db seed
 ## 📞 Support
 
 Pour toute question, contacter l'administrateur du projet.
+

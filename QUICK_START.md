@@ -1,4 +1,4 @@
-# 🚀 Guide Rapide de Déploiement - KadriLex
+# 🚀 Guide Rapide de Déploiement - Dedalys
 
 ## ⚡ Déploiement en 5 Étapes (20 minutes)
 
@@ -9,8 +9,8 @@
 ### 1.1 Créer le Repository
 ```
 1. Aller sur : https://github.com/new
-2. Repository name : kadrilex
-3. Description : Solution de gestion pour cabinets juridiques au Niger
+2. Repository name : Dedalys
+3. Description : Solution de gestion pour cabinets juridiques en France
 4. Visibility : Private (recommandé)
 5. ⚠️ NE PAS cocher "Initialize with README"
 6. Cliquer "Create repository"
@@ -18,9 +18,9 @@
 
 ### 1.2 Pousser le Code
 ```bash
-cd "C:\Users\USER\Downloads\Dedalys (1).1-4515678458973055887\kadrilex"
+cd "C:\Users\USER\Downloads\Dedalys (1).1-4515678458973055887\Dedalys"
 
-git remote add origin https://github.com/VOTRE-USERNAME/kadrilex.git
+git remote add origin https://github.com/VOTRE-USERNAME/Dedalys.git
 git push -u origin main
 ```
 
@@ -35,7 +35,7 @@ git push -u origin main
 1. Aller sur : https://vercel.com/dashboard
 2. Cliquer "Storage" → "Create Database"
 3. Sélectionner "Postgres"
-4. Nom : kadrilex-db
+4. Nom : Dedalys-db
 5. Région : Europe West
 6. Cliquer "Create"
 7. Copier le DATABASE_URL
@@ -45,7 +45,7 @@ git push -u origin main
 ```
 1. Aller sur : https://neon.tech
 2. Sign up / Login
-3. "Create Project" → Nom : KadriLex
+3. "Create Project" → Nom : Dedalys
 4. Copier la "Connection String"
 ```
 
@@ -59,7 +59,7 @@ git push -u origin main
 ```
 1. Aller sur : https://vercel.com/new
 2. Cliquer "Import Git Repository"
-3. Sélectionner le repo "kadrilex"
+3. Sélectionner le repo "Dedalys"
 4. Framework : Next.js (auto-détecté)
 5. Root Directory : . (par défaut)
 ```
@@ -81,7 +81,7 @@ git push -u origin main
 
 ### 4.1 Créer le fichier .env.local
 ```bash
-# Dans le dossier kadrilex local
+# Dans le dossier Dedalys local
 echo "DATABASE_URL=votre_url_postgres_ici" > .env.local
 ```
 
@@ -103,12 +103,12 @@ npx prisma db seed
 
 ### 5.1 Ouvrir l'Application
 ```
-URL : https://kadrilex.vercel.app (ou votre URL Vercel)
+URL : https://Dedalys.vercel.app (ou votre URL Vercel)
 ```
 
 ### 5.2 Checklist Rapide
 - [ ] ✅ Logo affiche "K" (pas "D")
-- [ ] ✅ Titre "KadriLex" dans le navigateur
+- [ ] ✅ Titre "Dedalys" dans le navigateur
 - [ ] ✅ Menu contient "Bibliothèque"
 - [ ] ✅ Page Clients affiche 8 clients
 - [ ] ✅ Téléphones commencent par +227
@@ -133,7 +133,7 @@ vercel --prod
 ### Voir les logs Vercel
 ```
 1. Aller sur vercel.com/dashboard
-2. Sélectionner le projet kadrilex
+2. Sélectionner le projet Dedalys
 3. Onglet "Deployments"
 4. Cliquer sur le dernier déploiement
 5. Voir "Function Logs"
@@ -144,7 +144,7 @@ vercel --prod
 ## 📊 Données Incluses
 
 Après le seed, vous aurez :
-- ✅ 1 utilisateur (Maître Abdoulaye Kadri)
+- ✅ 1 utilisateur (Maître Jean Dupont)
 - ✅ 8 clients Niger (SONITEL, BIN, SONICHAR, Niger Lait + 4 particuliers)
 - ✅ 18 dossiers juridiques
 - ✅ 25 audiences
@@ -175,13 +175,13 @@ npx prisma db seed
 
 ## ✅ C'est Terminé !
 
-Votre application KadriLex est maintenant :
+Votre application Dedalys est maintenant :
 - ✅ Déployée sur Vercel
 - ✅ Connectée à PostgreSQL
-- ✅ Peuplée avec des données Niger/Niamey
+- ✅ Peuplée avec des données France
 - ✅ Prête pour présentation client
 
-**URL de l'application** : `https://kadrilex.vercel.app`
+**URL de l'application** : `https://Dedalys.vercel.app`
 
 ---
 
@@ -197,4 +197,5 @@ Votre application KadriLex est maintenant :
 **Temps total : ~20 minutes**  
 **Difficulté : Facile** 🟢
 
-🎉 **Félicitations ! KadriLex est en ligne !**
+🎉 **Félicitations ! Dedalys est en ligne !**
+

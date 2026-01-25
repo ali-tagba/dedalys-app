@@ -1,11 +1,11 @@
-# 🚀 Déploiement KadriLex - Instructions Complètes
+# 🚀 Déploiement Dedalys - Instructions Complètes
 
 ## ✅ État Actuel
 
-Le projet KadriLex est **100% prêt** avec :
+Le projet Dedalys est **100% prêt** avec :
 - ✅ Code complet et testé
-- ✅ Branding KadriLex appliqué
-- ✅ Données Niger/Niamey localisées
+- ✅ Branding Dedalys appliqué
+- ✅ Données France localisées
 - ✅ Module Bibliothèque ajouté
 - ✅ Git initialisé avec 2 commits
 - ✅ Prisma client généré
@@ -17,8 +17,8 @@ Le projet KadriLex est **100% prêt** avec :
 ### Option A : Via l'interface web GitHub
 
 1. Aller sur https://github.com/new
-2. **Repository name** : `kadrilex`
-3. **Description** : "KadriLex - Solution de gestion pour cabinets juridiques au Niger"
+2. **Repository name** : `Dedalys`
+3. **Description** : "Dedalys - Solution de gestion pour cabinets juridiques en France"
 4. **Visibility** : Private (recommandé) ou Public
 5. ⚠️ **NE PAS** cocher "Initialize with README"
 6. Cliquer sur "Create repository"
@@ -26,7 +26,7 @@ Le projet KadriLex est **100% prêt** avec :
 ### Option B : Via GitHub CLI (si installé)
 
 ```bash
-gh repo create kadrilex --private --source=. --remote=origin --push
+gh repo create Dedalys --private --source=. --remote=origin --push
 ```
 
 ---
@@ -37,10 +37,10 @@ Une fois le repository créé sur GitHub, exécuter ces commandes :
 
 ```bash
 # Se positionner dans le projet
-cd "C:\Users\USER\Downloads\Dedalys (1).1-4515678458973055887\kadrilex"
+cd "C:\Users\USER\Downloads\Dedalys (1).1-4515678458973055887\Dedalys"
 
 # Ajouter le remote GitHub (remplacer YOUR-USERNAME)
-git remote add origin https://github.com/YOUR-USERNAME/kadrilex.git
+git remote add origin https://github.com/YOUR-USERNAME/Dedalys.git
 
 # Vérifier que le remote est bien ajouté
 git remote -v
@@ -60,7 +60,7 @@ git push -u origin main
 2. Cliquer sur "Storage" dans le menu
 3. Cliquer sur "Create Database"
 4. Sélectionner "Postgres"
-5. Choisir un nom : `kadrilex-db`
+5. Choisir un nom : `Dedalys-db`
 6. Région : Choisir la plus proche (Europe West recommandé pour le Niger)
 7. Cliquer sur "Create"
 8. Une fois créé, copier le `DATABASE_URL` (format : `postgres://...`)
@@ -69,7 +69,7 @@ git push -u origin main
 
 1. Aller sur https://neon.tech
 2. Créer un compte
-3. Créer un nouveau projet : "KadriLex"
+3. Créer un nouveau projet : "Dedalys"
 4. Copier la "Connection String"
 
 ---
@@ -80,7 +80,7 @@ git push -u origin main
 
 1. Aller sur https://vercel.com/new
 2. Cliquer sur "Import Git Repository"
-3. Sélectionner le repository `kadrilex`
+3. Sélectionner le repository `Dedalys`
 4. **Framework Preset** : Next.js (détecté automatiquement)
 5. **Root Directory** : `.` (laisser par défaut)
 6. Cliquer sur "Environment Variables"
@@ -156,7 +156,7 @@ npx prisma db seed
 Ouvrir l'URL Vercel de votre application et vérifier :
 
 - [ ] ✅ L'application charge correctement
-- [ ] ✅ Le titre affiche "KadriLex" (pas "Dedalys")
+- [ ] ✅ Le titre affiche "Dedalys" (pas "Dedalys")
 - [ ] ✅ Le logo affiche "K" (pas "D")
 - [ ] ✅ Le menu contient "Bibliothèque"
 - [ ] ✅ La page Clients affiche des données Niger
@@ -180,9 +180,9 @@ Ouvrir l'URL Vercel de votre application et vérifier :
 
 Après déploiement, vous aurez :
 
-- **Application** : `https://kadrilex.vercel.app` (ou votre domaine personnalisé)
-- **GitHub** : `https://github.com/YOUR-USERNAME/kadrilex`
-- **Vercel Dashboard** : `https://vercel.com/your-username/kadrilex`
+- **Application** : `https://Dedalys.vercel.app` (ou votre domaine personnalisé)
+- **GitHub** : `https://github.com/YOUR-USERNAME/Dedalys`
+- **Vercel Dashboard** : `https://vercel.com/your-username/Dedalys`
 
 ---
 
@@ -190,7 +190,7 @@ Après déploiement, vous aurez :
 
 L'application sera pré-remplie avec :
 
-- **1 utilisateur** : Maître Abdoulaye Kadri (maitre.kadri@kadrilex.ne)
+- **1 utilisateur** : Maître Jean Dupont (maitre.kadri@Dedalys.ne)
 - **8 clients** :
   - 4 entreprises : SONITEL, Banque Islamique du Niger, SONICHAR, Niger Lait
   - 4 particuliers : Aïssata Maïga, Moussa Hamidou, Fati Oumarou, Ibrahim Mahamane
@@ -295,11 +295,12 @@ Avant de présenter au client :
 - [ ] Application déployée et accessible
 - [ ] Base de données peuplée avec données Niger
 - [ ] Tous les modules testés et fonctionnels
-- [ ] Branding KadriLex vérifié partout
+- [ ] Branding Dedalys vérifié partout
 - [ ] Données de démonstration vérifiées
 - [ ] Performance de l'application vérifiée
 - [ ] Responsive design vérifié (mobile/tablet/desktop)
 
 ---
 
-**Le projet KadriLex est prêt pour présentation client ! 🎉**
+**Le projet Dedalys est prêt pour présentation client ! 🎉**
+

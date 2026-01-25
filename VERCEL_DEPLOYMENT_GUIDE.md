@@ -120,3 +120,4 @@ Si vous rencontrez un problème, consultez le fichier `implementation_plan.md` p
 - **"Prisma Client not found"** → Allez dans Vercel Settings → General → Build Command et changez pour : `npx prisma generate && next build`
 - **"Database connection error"** → Vérifiez que la base PostgreSQL est bien créée dans l'onglet Storage
 - **"Page 404"** → Attendez 2-3 minutes que le déploiement se termine
+

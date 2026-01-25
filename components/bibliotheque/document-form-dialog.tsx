@@ -72,7 +72,7 @@ export function DocumentFormDialog({ open, onOpenChange, document }: DocumentFor
                             id="titre"
                             value={formData.titre}
                             onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                            placeholder="Ex: Arrêt Cour d'Appel de Niamey..."
+                            placeholder="Ex: Arrêt Cour d'Appel de Paris..."
                             required
                         />
                     </div>
@@ -126,7 +126,7 @@ export function DocumentFormDialog({ open, onOpenChange, document }: DocumentFor
                                 id="juridiction"
                                 value={formData.juridiction}
                                 onChange={(e) => setFormData({ ...formData, juridiction: e.target.value })}
-                                placeholder="Ex: Cour d'Appel de Niamey"
+                                placeholder="Ex: Cour d'Appel de Paris"
                             />
                         </div>
 
@@ -172,7 +172,7 @@ export function DocumentFormDialog({ open, onOpenChange, document }: DocumentFor
                             id="tags"
                             value={formData.tags}
                             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                            placeholder="Ex: droit commercial, contrat, Niger"
+                            placeholder="Ex: droit commercial, contrat, France"
                         />
                         <p className="text-xs text-slate-500 mt-1">
                             Les tags facilitent la recherche et le classement
