@@ -14,6 +14,8 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Documentation](#documentation)
+  - [Guide Frontend](docs/FRONTEND_GUIDE.md)
+  - [Composants](docs/COMPONENTS.md)
 - [Stack Technologique](#stack-technologique)
 - [Structure du Projet](#structure-du-projet)
 
@@ -153,12 +155,16 @@ L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 
 La documentation complète est organisée dans le dossier `docs/` :
 
+### Guides Frontend
+- **[FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md)** : **(Nouveau)** Guide complet pour les développeurs frontend (architecture, conventions, style).
+- **[COMPONENTS.md](docs/COMPONENTS.md)** : **(Nouveau)** Documentation technique des composants critiques et des "hacks" spécifiques (Scroll, SVG Colors).
+
+### Architecture Globale
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architecture technique et flux de données
-- **[COMPONENTS.md](docs/COMPONENTS.md)** - Documentation des 27 composants React
 - **[MODULES.md](docs/MODULES.md)** - Description détaillée des 5 modules
 - **[API.md](docs/API.md)** - Documentation des routes API
 - **[DATABASE.md](docs/DATABASE.md)** - Schéma de base de données et relations
-- **[DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** - Guide pour les développeurs
+- **[DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** - Guide général (backend/fullstack)
 
 ## 🛠️ Stack Technologique
 
