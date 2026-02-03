@@ -31,8 +31,9 @@ Dedalys est conçu pour simplifier et optimiser la gestion quotidienne d'un cabi
 
 ## ✨ Fonctionnalités
 
-### 📊 Tableau de Bord
+### 📊 Tableau de Bord (Dashboard)
 - Vue d'ensemble des KPIs (clients, dossiers actifs, audiences, facturation)
+- **UI Fluide & Responsive** : S'adapte parfaitement du mobile au grand écran (Inspiré de Notion/Airtable).
 - Liste des audiences à venir avec indicateurs d'urgence
 - Actions rapides pour créer clients, audiences et factures
 - Statistiques en temps réel
@@ -74,7 +75,7 @@ Dedalys est conçu pour simplifier et optimiser la gestion quotidienne d'un cabi
 
 ## 🏗️ Architecture
 
-Dedalys est construit sur une architecture moderne Next.js 16 avec App Router :
+Dedalys est construit sur une architecture moderne Next.js 16 avec App Router et un **Design System Fluide**.
 
 ```
 ┌─────────────────────────────────────────────────┐

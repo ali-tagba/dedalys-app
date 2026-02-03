@@ -46,6 +46,28 @@ Utilisation recommandée :
 <div className="overflow-auto custom-scrollbar">...</div>
 ```
 
+## 📐 Système de Design Fluide (Sprint 3)
+
+Pour garantir une expérience parfaite sur tous les écrans (Mobile -> Grand 4K), nous utilisons des techniques CSS modernes inspirées d'outils comme Notion.
+
+### Variables Fluides (`clamp()`)
+Ne hardcodez plus les tailles de police ou les paddings fixes. Utilisez les variables CSS définies dans `globals.css` :
+
+- **Polices** :
+    - `text-[length:var(--font-size-base)]` : Taille de police standard qui s'adapte (14px -> 16px).
+    - `text-[length:var(--font-size-lg)]` : Pour les titres de section.
+- **Espacements** :
+    - `p-[var(--container-padding)]` : Padding de conteneur (1rem mobile -> 2.5rem desktop).
+    - `gap-[var(--spacing-4)]` : Espacement standard fluide.
+- **Boutons** :
+    - `h-[var(--btn-height-default)]` : Hauteur fluide (36px -> 44px).
+    - Tous les boutons doivent avoir une `min-height` de **44px** pour le tactile si utilisée via la classe `default`.
+
+### Bonnes Pratiques Responsive
+1. **Conteneurs** : Utilisez toujours `p-[var(--container-padding)]` pour les pages principales.
+2. **Tableaux** : Pour éviter l'écrasement des données sur laptop, forcez une largeur min : `<table className="min-w-[1000px]">`.
+3. **Touch Targets** : Aucun élément interactif ne doit faire moins de 44px de hauteur sur mobile.
+
 ## 🛠️ État et Données
 
 ### Récupération de Données (Fetching)

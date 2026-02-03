@@ -22,7 +22,7 @@ export function ClientTable({ clients, getDossiersCount }: ClientTableProps) {
     return (
         <div className="h-full w-full overflow-auto relative custom-scrollbar">
             {/* Force table to have a minimum width to ensure horizontal scroll works on small screens */}
-            <table className="w-full caption-bottom text-sm min-w-[1400px]">
+            <table className="w-full caption-bottom text-sm min-w-[1000px]">
                 <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-sm">
                     <TableRow className="hover:bg-slate-50 border-b border-slate-200">
                         <TableHead className="w-[80px] pl-6">Type</TableHead>

@@ -44,6 +44,22 @@ export default function FlashCRPage() {
     // AVAILABLE = Show existing FlashCRs
     // UNAVAILABLE = Show audiences that don't have a FlashCR yet
 
+    // Protected Guard
+    const [isAuthorized, setIsAuthorized] = useState(false)
+    const [authChecking, setAuthChecking] = useState(true)
+
+    useEffect(() => {
+        // Mock Auth Check
+        const checkAuth = async () => {
+            // In a real app, verify session here
+            setTimeout(() => {
+                setIsAuthorized(true) // Simulating allowed access
+                setAuthChecking(false)
+            }, 500)
+        }
+        checkAuth()
+    }, [])
+
     const displayedItems = (() => {
         if (filterMode === "AVAILABLE") {
             return flashCrs.map(cr => {
@@ -58,10 +74,21 @@ export default function FlashCRPage() {
         }
     })()
 
-    if (loading) {
+    if (authChecking || loading) {
         return (
             <div className="flex items-center justify-center h-96">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-200 border-t-blue-600"></div>
+            </div>
+        )
+    }
+
+    if (!isAuthorized) {
+        return (
+            <div className="flex items-center justify-center h-96 text-center">
+                <div>
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Accès Refusé</h2>
+                    <p className="text-slate-500">Vous n'avez pas les droits nécessaires pour accéder à cette section.</p>
+                </div>
             </div>
         )
     }

@@ -25,11 +25,16 @@ import {
     CheckCircle2,
     AlertCircle,
     Edit2,
-    Palette
+    Palette,
+    Building2,
+    Briefcase,
+    User
 } from "lucide-react"
 import { ModernFolderIcon, FolderColor } from "@/components/ui/modern-folder-icon"
 import { RenameFolderDialog } from "@/components/dossiers/rename-folder-dialog"
 import { ColorPicker } from "@/components/dossiers/color-picker"
+import { Separator } from "@/components/ui/separator"
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,13 +44,15 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { TimeTracker } from "@/components/dossiers/time-tracker"
+import { cn } from "@/lib/utils"
 
 // Status Configuration - matching API values
 const statusConfig: any = {
     EN_COURS: { label: "En cours", color: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
     EN_ATTENTE: { label: "En attente", color: "bg-orange-50 text-orange-700 border-orange-200", icon: AlertCircle },
     CLOTURE: { label: "Clôturé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
-    CLOSTURE: { label: "Clôturé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 }, // Typo fallback
+
     TERMINE: { label: "Terminé", color: "bg-slate-50 text-slate-700 border-slate-200", icon: CheckCircle2 },
     ARCHIVE: { label: "Archivé", color: "bg-slate-50 text-slate-700 border-slate-200", icon: Folder }
 }
@@ -168,7 +175,7 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
     }
 
     return (
-        <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+        <div className="space-y-[var(--spacing-6)] h-[calc(100vh-100px)] flex flex-col p-[var(--container-padding)]">
             {/* Header */}
             <div className="flex-none">
                 <div className="flex items-center gap-4 mb-6">
@@ -401,18 +408,33 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
             {/* AUDIENCES TAB */}
             {activeTab === "audiences" && (
                 <Card className="flex-1 shadow-sm overflow-hidden border-slate-200 p-6">
-                    {dossier.audiences && dossier.audiences.length > 0 ? (
+                    <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-slate-900">Toutes les audiences du client</h3>
+                        <p className="text-sm text-slate-500">Liste complète des audiences associées à {dossier.client?.raisonSociale || dossier.client?.nom}</p>
+                    </div>
+                    {dossier.client?.audiences && dossier.client.audiences.length > 0 ? (
                         <div className="space-y-4">
-                            {dossier.audiences.map((audience: any) => (
-                                <div key={audience.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-lg hover:bg-slate-50">
+                            {dossier.client.audiences.map((audience: any) => (
+                                <div key={audience.id} className={cn(
+                                    "flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors",
+                                    audience.dossierId === dossier.id ? "border-blue-200 bg-blue-50/20" : "border-slate-100"
+                                )}>
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-blue-50 rounded-lg flex flex-col items-center justify-center text-blue-700">
+                                        <div className={cn(
+                                            "w-12 h-12 rounded-lg flex flex-col items-center justify-center",
+                                            audience.dossierId === dossier.id ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"
+                                        )}>
                                             <span className="text-xs font-bold">{new Date(audience.date).getDate()}</span>
                                             <span className="text-[10px] uppercase">{new Date(audience.date).toLocaleString('default', { month: 'short' })}</span>
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-slate-900">{audience.titre}</h4>
-                                            <p className="text-sm text-slate-500">{audience.juridiction || "Tribunal"} • {audience.heure}</p>
+                                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                <span>{audience.juridiction || "Tribunal"} • {audience.heure}</span>
+                                                {audience.dossierId !== dossier.id && (
+                                                    <Badge variant="secondary" className="text-[10px] h-5">Autre dossier</Badge>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <Badge variant="outline">{audience.statut}</Badge>
@@ -420,66 +442,166 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-slate-500">Aucune audience planifiée.</div>
+                        <div className="text-center py-12 text-slate-500">Aucune audience trouvée pour ce client.</div>
+                    )}
+                </Card>
+            )}
+
+            {/* FACTURATION TAB */}
+            {activeTab === "facturation" && (
+                <Card className="flex-1 shadow-sm overflow-hidden border-slate-200 p-6">
+                    <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-slate-900">Historique de Facturation</h3>
+                        <p className="text-sm text-slate-500">Toutes les factures de {dossier.client?.raisonSociale || dossier.client?.nom}</p>
+                    </div>
+                    {dossier.client?.invoices && dossier.client.invoices.length > 0 ? (
+                        <div className="overflow-auto border border-slate-200 rounded-lg">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 font-medium">
+                                    <tr>
+                                        <th className="px-4 py-3">Numéro</th>
+                                        <th className="px-4 py-3">Date</th>
+                                        <th className="px-4 py-3 text-right">Montant TTC</th>
+                                        <th className="px-4 py-3 text-center">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {dossier.client.invoices.map((inv: any) => (
+                                        <tr key={inv.id} className="hover:bg-slate-50">
+                                            <td className="px-4 py-3 font-medium text-slate-700">{inv.numero}</td>
+                                            <td className="px-4 py-3 text-slate-500">{new Date(inv.date).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3 text-right font-mono">
+                                                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(inv.montantTTC).replace('F\u202FCFA', 'FCFA')}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <Badge variant="outline" className={
+                                                    inv.statut === 'PAYEE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                        inv.statut === 'IMPAYEE' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                            'bg-orange-50 text-orange-700 border-orange-200'
+                                                }>{inv.statut}</Badge>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-slate-500">Aucune facture trouvée pour ce client.</div>
                     )}
                 </Card>
             )}
 
             {activeTab === "info" && (
-                <div className="grid grid-cols-3 gap-6">
-                    <Card className="col-span-2 p-6">
-                        <h3 className="font-semibold text-lg mb-4">Détails de l'affaire</h3>
-                        <div className="grid grid-cols-2 gap-y-6 gap-x-12">
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Type d'affaire</label>
-                                <p className="mt-1 font-medium">{dossier.type}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* General Info Card */}
+                    <Card className="col-span-2 shadow-sm border-slate-200 h-fit">
+                        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                            <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                                <Briefcase className="h-4 w-4 text-blue-600" /> Détails de la procédure
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Type de Dossier</label>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="rounded-md">
+                                            {dossier.typeDossier === "CONTENTIEUX" ? "Contentieux" :
+                                                dossier.typeDossier === "PRE_CONTENTIEUX" ? "Pré-contentieux" :
+                                                    dossier.typeDossier === "TRANSACTIONNEL" ? "Transactionnel" :
+                                                        dossier.typeDossier === "CONSEIL" ? "Conseil" :
+                                                            dossier.typeDossier || "Non spécifié"}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Domaine du Droit</label>
+                                    <div className="flex items-center gap-2">
+                                        <Scale className="h-4 w-4 text-slate-400" />
+                                        <span className="font-medium text-slate-900">
+                                            {dossier.domaineDroit === "TRAVAIL" ? "Droit du travail" :
+                                                dossier.domaineDroit === "CIVIL" ? "Droit civil" :
+                                                    dossier.domaineDroit === "IMMOBILIER" ? "Droit immobilier" :
+                                                        dossier.domaineDroit === "COMMERCIAL" ? "Droit commercial" :
+                                                            dossier.domaineDroit === "AUTRE" ? "Autres" :
+                                                                dossier.domaineDroit || "Non spécifié"}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Type de Dossier</label>
-                                <p className="mt-1 font-medium">
-                                    {dossier.typeDossier === "CONTENTIEUX" ? "Contentieux" :
-                                        dossier.typeDossier === "PRE_CONTENTIEUX" ? "Pré-contentieux" :
-                                            dossier.typeDossier === "TRANSACTIONNEL" ? "Transactionnel" :
-                                                dossier.typeDossier === "CONSEIL" ? "Conseil" :
-                                                    dossier.typeDossier || "Non spécifié"}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Domaine du Droit</label>
-                                <p className="mt-1 font-medium">
-                                    {dossier.domaineDroit === "TRAVAIL" ? "Droit du travail" :
-                                        dossier.domaineDroit === "CIVIL" ? "Droit civil" :
-                                            dossier.domaineDroit === "IMMOBILIER" ? "Droit immobilier" :
-                                                dossier.domaineDroit === "COMMERCIAL" ? "Droit commercial" :
-                                                    dossier.domaineDroit === "AUTRE" ? "Autres" :
-                                                        dossier.domaineDroit || "Non spécifié"}
-                                </p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Avocat Assigné</label>
-                                <p className="mt-1 font-medium">{dossier.avocatAssigne || "Non assigné"}</p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Juridiction</label>
-                                <p className="mt-1 font-medium">{dossier.juridiction}</p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Client</label>
-                                <Link href={`/clients/${dossier.clientId}`} className="mt-1 font-medium text-blue-600 hover:underline">
-                                    {dossier.client?.raisonSociale || `${dossier.client?.nom} ${dossier.client?.prenom}`}
-                                </Link>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Date d'ouverture</label>
-                                <p className="mt-1 font-medium font-mono">{new Date(dossier.dateOuverture).toLocaleDateString()}</p>
-                            </div>
-                        </div>
 
-                        <div className="mt-8 pt-6 border-t border-slate-100">
-                            <h4 className="font-medium mb-3">Description</h4>
-                            <p className="text-slate-600 leading-relaxed text-sm">{dossier.description || "Aucune description."}</p>
-                        </div>
+                            <div>
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">Description / Notes</label>
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed">
+                                    {dossier.description || "Aucune description disponible pour ce dossier."}
+                                </div>
+                            </div>
+                        </CardContent>
                     </Card>
+
+                    {/* Side Info Column */}
+                    <div className="space-y-6">
+
+                        {/* Time Tracker Widget */}
+                        <TimeTracker dossierId={dossier.id} />
+
+                        {/* Jurisdiction & Dates */}
+                        <Card className="shadow-sm border-slate-200">
+                            <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-4">
+                                <CardTitle className="text-sm font-semibold text-slate-900">Contexte Juridique</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 space-y-4">
+                                <div>
+                                    <label className="text-xs text-slate-500 font-medium uppercase mb-1 block">Juridiction</label>
+                                    <div className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-slate-400" />
+                                        <span className="font-medium">{dossier.juridiction || "Non définie"}</span>
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <label className="text-xs text-slate-500 font-medium uppercase mb-1 block">Avocat Assigné</label>
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-slate-400" />
+                                        <span className="font-medium">{dossier.avocatAssigne || "Non assigné"}</span>
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <label className="text-xs text-slate-500 font-medium uppercase mb-1 block">Date d'ouverture</label>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-slate-400" />
+                                        <span className="font-mono text-sm">{new Date(dossier.dateOuverture).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Client Card */}
+                        <Card className="shadow-sm border-slate-200">
+                            <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-4">
+                                <CardTitle className="text-sm font-semibold text-slate-900">Client Lié</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                                        {dossier.client?.raisonSociale?.[0] || dossier.client?.nom?.[0] || "C"}
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <Link href={`/clients/${dossier.clientId}`} className="font-medium text-blue-600 hover:underline truncate block">
+                                            {dossier.client?.raisonSociale || `${dossier.client?.nom} ${dossier.client?.prenom}`}
+                                        </Link>
+                                        <p className="text-xs text-slate-500 truncate">{dossier.client?.email}</p>
+                                    </div>
+                                </div>
+                                <Link href={`/clients/${dossier.clientId}`}>
+                                    <Button variant="outline" size="sm" className="w-full">
+                                        Voir la fiche client
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             )}
         </div>

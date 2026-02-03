@@ -10,10 +10,20 @@ export async function GET(
         const dossier = await prisma.dossier.findUnique({
             where: { id },
             include: {
-                client: true,
+                client: {
+                    include: {
+                        audiences: {
+                            orderBy: { date: 'desc' },
+                        },
+                        invoices: {
+                            orderBy: { date: 'desc' },
+                        },
+                    }
+                },
                 files: {
                     orderBy: { createdAt: 'desc' },
                 },
+                // Keep direct relations too just in case
                 audiences: {
                     orderBy: { date: 'desc' },
                 },

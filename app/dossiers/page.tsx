@@ -110,9 +110,9 @@ export default function DossiersPage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header & Stats */}
-            <div className="flex flex-col gap-6">
+        <div className="flex flex-col h-full p-[var(--container-padding)] gap-[var(--spacing-6)]">
+            {/* Header & Stats - Fixed at top */}
+            <div className="flex-none flex flex-col gap-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -124,7 +124,7 @@ export default function DossiersPage() {
                     </div>
                     <Button
                         size="lg"
-                        className="shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform"
+                        className="shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={() => setDialogOpen(true)}
                     >
                         <Plus className="h-4 w-4 mr-2" />
@@ -140,7 +140,7 @@ export default function DossiersPage() {
                         { label: "En attente", value: stats.enAttente, color: "bg-orange-50 text-orange-700" },
                         { label: "Clôturés", value: stats.clotures, color: "bg-green-50 text-green-700" }
                     ].map((stat, idx) => (
-                        <Card key={idx} className={`p-4 ${stat.color} border-none`}>
+                        <Card key={idx} className={`p-4 ${stat.color} border-none shadow-sm`}>
                             <div className="text-sm font-medium opacity-80">{stat.label}</div>
                             <div className="text-2xl font-bold mt-1">{stat.value}</div>
                         </Card>
@@ -148,27 +148,27 @@ export default function DossiersPage() {
                 </div>
 
                 {/* Filters & Search */}
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white p-1 rounded-lg">
                     <div className="relative w-full lg:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                             placeholder="Rechercher par intitulé, numéro, juridiction..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 h-10 bg-white border-slate-200 focus:border-blue-500 transition-all shadow-sm"
+                            className="pl-10 h-10 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500 transition-all shadow-sm"
                         />
                     </div>
 
-                    <div className="flex items-center gap-3 w-full lg:w-auto">
+                    <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
                         {/* Status Filter */}
-                        <div className="flex gap-2 overflow-x-auto">
+                        <div className="flex gap-2">
                             {(["ALL", "EN_COURS", "EN_ATTENTE", "CLOTURE"] as const).map((status) => (
                                 <Button
                                     key={status}
                                     variant={statusFilter === status ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => setStatusFilter(status)}
-                                    className="whitespace-nowrap"
+                                    className="whitespace-nowrap rounded-lg"
                                 >
                                     {status === "ALL" ? "Tous" : statusConfig[status as DossierStatus].label}
                                 </Button>
@@ -176,13 +176,13 @@ export default function DossiersPage() {
                         </div>
 
                         {/* View Toggle */}
-                        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "gallery")} className="hidden lg:block">
-                            <TabsList>
-                                <TabsTrigger value="list" className="gap-2">
-                                    <TableIcon className="h-4 w-4" /> Tableau
+                        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "gallery")} className="hidden lg:block ml-2">
+                            <TabsList className="bg-slate-100">
+                                <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                                    <TableIcon className="h-4 w-4" />
                                 </TabsTrigger>
-                                <TabsTrigger value="gallery" className="gap-2">
-                                    <LayoutGrid className="h-4 w-4" /> Galerie
+                                <TabsTrigger value="gallery" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                                    <LayoutGrid className="h-4 w-4" />
                                 </TabsTrigger>
                             </TabsList>
                         </Tabs>
@@ -190,11 +190,11 @@ export default function DossiersPage() {
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="min-h-[400px]">
+            {/* Content Area - Flex-1 for scroll */}
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                 {filteredDossiers.length === 0 ? (
-                    <div className="text-center py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 m-1">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                             <Search className="h-8 w-8 text-slate-400" />
                         </div>
                         <h3 className="text-lg font-medium text-slate-900">Aucun dossier trouvé</h3>
@@ -204,82 +204,86 @@ export default function DossiersPage() {
                     <>
                         {/* TABLE VIEW (Desktop) */}
                         {viewMode === "list" && (
-                            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-slate-50/50">
-                                        <TableRow>
-                                            <TableHead className="w-[250px]">Dossier</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead>Statut</TableHead>
-                                            <TableHead>Juridiction</TableHead>
-                                            <TableHead>Prochaine audience</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredDossiers.map((dossier) => {
-                                            const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
-                                            const StatusIcon = statusConfig[statusKey].icon
-                                            const nextAudience = dossier.audiences
-                                                .filter((a: any) => a.statut === "PLANIFIEE")
-                                                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+                            <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+                                <div className="overflow-auto flex-1 custom-scrollbar">
+                                    <Table className="min-w-[1000px]">
+                                        <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-sm">
+                                            <TableRow className="hover:bg-transparent border-b-slate-200">
+                                                <TableHead className="w-[300px] pl-6 font-semibold text-slate-600">Dossier</TableHead>
+                                                <TableHead className="font-semibold text-slate-600">Type</TableHead>
+                                                <TableHead className="font-semibold text-slate-600">Statut</TableHead>
+                                                <TableHead className="font-semibold text-slate-600">Juridiction</TableHead>
+                                                <TableHead className="font-semibold text-slate-600">Prochaine audience</TableHead>
+                                                <TableHead className="text-right pr-6 font-semibold text-slate-600">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredDossiers.map((dossier) => {
+                                                const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
+                                                const StatusIcon = statusConfig[statusKey].icon
+                                                const nextAudience = dossier.audiences
+                                                    .filter((a: any) => a.statut === "PLANIFIEE")
+                                                    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
 
-                                            return (
-                                                <TableRow key={dossier.id} className="group hover:bg-slate-50/50">
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                                <Scale className="h-5 w-5" />
+                                                return (
+                                                    <TableRow key={dossier.id} className="group hover:bg-blue-50/30 border-b-slate-100 transition-colors">
+                                                        <TableCell className="font-medium pl-6 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center ring-1 ring-blue-100 group-hover:bg-blue-100 transition-colors">
+                                                                    <FolderOpen className="h-5 w-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">{dossier.intitule}</div>
+                                                                    <div className="text-xs text-slate-500 font-mono">{dossier.numero}</div>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <div className="font-bold text-slate-900">{dossier.intitule}</div>
-                                                                <div className="text-xs text-slate-500">{dossier.numero}</div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="secondary" className={`${typeConfig[(dossier.type || 'AUTRE') as DossierType].color} border-transparent font-normal`}>
+                                                                {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1.5 w-fit pl-1.5 pr-2.5 py-0.5 border-transparent`}>
+                                                                <StatusIcon className="h-3.5 w-3.5" />
+                                                                <span className="font-medium">{statusConfig[statusKey].label}</span>
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium text-slate-700">{dossier.juridiction.nom}</span>
+                                                                <span className="text-xs text-slate-400">{dossier.juridiction.ville}</span>
                                                             </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="secondary" className={typeConfig[(dossier.type || 'AUTRE') as DossierType].color}>
-                                                            {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1 w-fit`}>
-                                                            <StatusIcon className="h-3 w-3" />
-                                                            {statusConfig[statusKey].label}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="text-sm text-slate-600">{dossier.juridiction.nom}</div>
-                                                        <div className="text-xs text-slate-400">{dossier.juridiction.ville}</div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {nextAudience ? (
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <Calendar className="h-4 w-4 text-slate-400" />
-                                                                <span>{new Date(nextAudience.date).toLocaleDateString('fr-FR')}</span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-xs text-slate-400">Aucune</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Link href={`/dossiers/${dossier.id}`}>
-                                                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                                                                Ouvrir
-                                                            </Button>
-                                                        </Link>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )
-                                        })}
-                                    </TableBody>
-                                </Table>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {nextAudience ? (
+                                                                <div className="flex items-center gap-2 text-sm bg-slate-50 w-fit px-2 py-1 rounded-md border border-slate-100">
+                                                                    <Calendar className="h-4 w-4 text-blue-500" />
+                                                                    <span className="font-medium text-slate-700">{new Date(nextAudience.date).toLocaleDateString('fr-FR')}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-slate-400 italic pl-2">Aucune</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-right pr-6">
+                                                            <Link href={`/dossiers/${dossier.id}`}>
+                                                                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 font-medium">
+                                                                    Ouvrir
+                                                                </Button>
+                                                            </Link>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </div>
                         )}
 
-                        {/* GALLERY VIEW */}
+                        {/* GALLERY VIEW (Scrollable) */}
                         {viewMode === "gallery" && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="overflow-y-auto flex-1 custom-scrollbar pr-2">
                                 {filteredDossiers.map((dossier) => {
                                     const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
                                     const StatusIcon = statusConfig[statusKey].icon

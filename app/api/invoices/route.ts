@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
 
-        console.log('Creating invoice with data:', body)
+        // Logs removed
 
         const invoice = await prisma.invoice.create({
             data: {

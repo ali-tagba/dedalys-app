@@ -90,8 +90,23 @@ model Dossier {
   audiences    Audience[]
   invoices     Invoice[]
   flashCrs     FlashCR[]
+  timeEntries  TimeEntry[]
 
   @@index([clientId])
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  dossierId   String
+  duration    Int      // Duration in minutes
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dossier     Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
 }
 
 model DossierFile {
@@ -190,5 +205,4 @@ model Invoice {
   @@index([audienceId])
   @@index([date])
 }
-
 

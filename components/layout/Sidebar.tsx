@@ -9,7 +9,8 @@ import {
     Calendar,
     FileText,
     CreditCard,
-    Settings
+    Settings,
+    TrendingUp
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 

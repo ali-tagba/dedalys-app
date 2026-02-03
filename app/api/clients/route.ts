@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
 
-        console.log('Creating client with data:', body)
+        // Logs removed
 
         // Build data object based on client type
         const clientData: any = {

@@ -11,6 +11,7 @@ Bienvenue dans le projet Dedalys ! Ce guide vous aidera à démarrer rapidement 
 - [Workflow de Développement](#workflow-de-développement)
 - [Bonnes Pratiques](#bonnes-pratiques)
 - [Debugging](#debugging)
+- [Guide Frontend (UI/UX)](FRONTEND_GUIDE.md)
 - [FAQ](#faq)
 
 ---

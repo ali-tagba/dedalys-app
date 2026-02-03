@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
 
-        console.log('Creating audience with data:', body)
+        // Logs removed
 
         const audience = await prisma.audience.create({
             data: {
