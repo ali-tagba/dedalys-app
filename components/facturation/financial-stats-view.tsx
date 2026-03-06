@@ -3,14 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, Target, Wallet, ArrowUpRight, ArrowDownRight } from "lucide-react"
 
-export function FinancialStatsView() {
+export function FinancialStatsView({ totalPaid = 0, countPaiements = 0 }: any) {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard
                     title="Chiffre d'Affaires"
-                    value="12.5 M FCFA"
-                    subtitle="+15% ce mois"
+                    value={`${totalPaid.toLocaleString()} FCFA`}
+                    subtitle="Cumul des paiements"
                     icon={TrendingUp}
                     trend="up"
                     color="emerald"
@@ -18,25 +18,25 @@ export function FinancialStatsView() {
                 <StatsCard
                     title="Objectif Mensuel"
                     value="15 M FCFA"
-                    subtitle="83% atteint"
+                    subtitle="En cours"
                     icon={Target}
                     trend="neutral"
                     color="blue"
                 />
                 <StatsCard
-                    title="Factures Émises"
-                    value="45"
-                    subtitle="Cette année"
+                    title="Paiements Reçus"
+                    value={countPaiements}
+                    subtitle="Enregistrés"
                     icon={Wallet}
                     trend="neutral"
                     color="purple"
                 />
                 <StatsCard
                     title="Taux Recouvrement"
-                    value="92%"
-                    subtitle="+2% vs m-1"
+                    value="N/A"
+                    subtitle="Calcul en cours"
                     icon={ArrowUpRight}
-                    trend="up"
+                    trend="neutral"
                     color="orange"
                 />
             </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { api } from "@/lib/api"
 import { FlashCrFormDialog } from "@/components/flash-cr/flash-cr-form-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,12 +22,11 @@ export default function FlashCRPage() {
         try {
             setLoading(true)
             const [flashCrsRes, audiencesRes] = await Promise.all([
-                fetch('/api/flash-cr'),
-                fetch('/api/audiences')
+                api.get('/api/v1/flash-cr'),
+                api.get('/api/v1/audiences')
             ])
-            if (!flashCrsRes.ok || !audiencesRes.ok) throw new Error('Failed to fetch data')
-            const flashCrsData = await flashCrsRes.json()
-            const audiencesData = await audiencesRes.json()
+            const flashCrsData = flashCrsRes.data.data || flashCrsRes.data || []
+            const audiencesData = audiencesRes.data.data || audiencesRes.data || []
             setFlashCrs(flashCrsData)
             setAudiences(audiencesData)
         } catch (error) {
@@ -63,12 +63,12 @@ export default function FlashCRPage() {
     const displayedItems = (() => {
         if (filterMode === "AVAILABLE") {
             return flashCrs.map(cr => {
-                const audience = audiences.find(a => a.id === cr.audienceId)
+                const audience = audiences.find(a => a.id === cr.audience_id)
                 return { type: 'CR', data: cr, audience }
             })
         } else {
             // Unavailable: Audiences without CR
-            const flashCrAudienceIds = new Set(flashCrs.map(cr => cr.audienceId))
+            const flashCrAudienceIds = new Set(flashCrs.map(cr => cr.audience_id))
             const audiencesWithoutCR = audiences.filter(a => !flashCrAudienceIds.has(a.id))
             return audiencesWithoutCR.map(aud => ({ type: 'AUDIENCE', data: aud, audience: aud }))
         }
@@ -153,12 +153,12 @@ export default function FlashCRPage() {
                                                     Disponible
                                                 </Badge>
                                                 <span className="text-xs font-mono text-slate-400">
-                                                    {format(new Date(cr.createdAt), "dd MMM yyyy", { locale: fr })}
+                                                    {format(new Date(cr.created_at || new Date()), "dd MMM yyyy", { locale: fr })}
                                                 </span>
                                             </div>
 
                                             <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-2">
-                                                Audience: {aud?.title || "Audience inconnue"}
+                                                Audience: {aud?.titre || aud?.title || "Audience inconnue"}
                                             </h3>
 
                                             <p className="text-sm text-slate-600 line-clamp-3 mb-6 flex-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
@@ -168,11 +168,11 @@ export default function FlashCRPage() {
                                             <div className="space-y-2 pt-4 border-t border-slate-100">
                                                 <div className="flex items-center gap-2 text-sm text-slate-500">
                                                     <Briefcase className="w-3.5 h-3.5" />
-                                                    <span className="truncate">{aud?.dossierId}</span>
+                                                    <span className="truncate text-xs">Dossier: {aud?.dossier_id || aud?.dossierId}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm text-slate-500">
                                                     <User className="w-3.5 h-3.5" />
-                                                    <span className="truncate">{aud?.clientId}</span>
+                                                    <span className="truncate text-xs">Client: {aud?.client_id || aud?.clientId}</span>
                                                 </div>
                                             </div>
 
@@ -205,8 +205,8 @@ export default function FlashCRPage() {
                                                 </span>
                                             </div>
 
-                                            <h3 className="font-bold text-slate-900 mb-1">
-                                                {aud.title}
+                                            <h3 className="font-bold text-slate-900 mb-1 line-clamp-1">
+                                                {aud.titre || aud.title}
                                             </h3>
                                             <p className="text-sm text-slate-500 mb-4 flex items-center gap-1.5">
                                                 <Gavel className="w-3.5 h-3.5" />

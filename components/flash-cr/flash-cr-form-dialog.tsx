@@ -22,11 +22,15 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
+import { api } from "@/lib/api"
+
 const flashCrSchema = z.object({
     audienceId: z.string().min(1, "Audience requise"),
+    typeDecision: z.string().min(1, "Type de décision requis"),
+    prochaineDate: z.string().optional(),
     contenu: z.string().min(1, "Contenu requis"),
-    destinataires: z.string().min(1, "Au moins un destinataire requis"),
-    statutEnvoi: z.string().optional(),
+    notesRapides: z.string().optional(),
+    envoyerEmail: z.boolean().default(false),
 })
 
 type FlashCrFormData = z.infer<typeof flashCrSchema>
@@ -58,17 +62,24 @@ export function FlashCrFormDialog({
         formState: { errors },
     } = useForm<FlashCrFormData>({
         resolver: zodResolver(flashCrSchema),
-        defaultValues: flashCr || {
+        defaultValues: flashCr ? {
+            audienceId: flashCr.audience_id || "",
+            typeDecision: flashCr.type_decision || "plaidoirie",
+            prochaineDate: flashCr.prochaine_date || "",
+            contenu: flashCr.contenu || "",
+            notesRapides: flashCr.notes_rapides || "",
+            envoyerEmail: flashCr.email_envoye || false,
+        } : {
             audienceId: prefilledAudienceId || "",
-            statutEnvoi: "DRAFT",
+            typeDecision: "plaidoirie",
+            envoyerEmail: false,
         },
     })
 
     useEffect(() => {
         if (open) {
-            fetch('/api/audiences')
-                .then(res => res.json())
-                .then(data => setAudiences(data))
+            api.get('/api/v1/audiences')
+                .then(res => setAudiences(res.data.data || res.data || []))
                 .catch(err => console.error('Error fetching audiences:', err))
         }
     }, [open])
@@ -76,35 +87,26 @@ export function FlashCrFormDialog({
     const onSubmit = async (data: FlashCrFormData) => {
         setLoading(true)
         try {
-            const url = isEdit ? `/api/flash-cr/${flashCr.id}` : "/api/flash-cr"
-            const method = isEdit ? "PATCH" : "POST"
-
-            // Convert comma-separated emails to array
-            const destinataires = data.destinataires.split(',').map(email => email.trim())
-
-            // Get clientId and dossierId from selected audience
-            const selectedAudience = audiences.find(a => a.id === data.audienceId)
-
             const payload = {
-                ...data,
-                destinataires,
-                clientId: selectedAudience?.clientId,
-                dossierId: selectedAudience?.dossierId,
+                audience_id: data.audienceId,
+                type_decision: data.typeDecision,
+                prochaine_date: data.prochaineDate || null,
+                contenu: data.contenu,
+                notes_rapides: data.notesRapides || null,
+                envoyer_email: data.envoyerEmail,
             }
 
-            const response = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            })
-
-            if (!response.ok) throw new Error("Failed to save FlashCR")
+            if (isEdit) {
+                await api.patch(`/api/v1/flash-cr/${flashCr.id}`, payload)
+            } else {
+                await api.post("/api/v1/flash-cr/", payload)
+            }
 
             onSuccess?.()
             onOpenChange(false)
-        } catch (error) {
-            console.error("Error saving FlashCR:", error)
-            alert("Erreur lors de l'enregistrement du Flash CR")
+        } catch (error: any) {
+            console.error("Error saving FlashCR:", error?.response?.data || error)
+            alert("Erreur lors de l'enregistrement du Flash CR: " + (error?.response?.data?.detail || error.message))
         } finally {
             setLoading(false)
         }
@@ -143,11 +145,39 @@ export function FlashCrFormDialog({
                         )}
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Type de décision *</Label>
+                            <Select
+                                value={watch("typeDecision")}
+                                onValueChange={(value) => setValue("typeDecision", value)}
+                            >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="mise_en_delibere">Mise en délibéré</SelectItem>
+                                    <SelectItem value="renvoi">Renvoi</SelectItem>
+                                    <SelectItem value="plaidoirie">Plaidoirie</SelectItem>
+                                    <SelectItem value="autre">Autre</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {errors.typeDecision && (
+                                <p className="text-sm text-red-600">{errors.typeDecision.message}</p>
+                            )}
+                        </div>
+
+                        {(watch("typeDecision") === "mise_en_delibere" || watch("typeDecision") === "renvoi") && (
+                            <div className="space-y-2">
+                                <Label>Prochaine date *</Label>
+                                <Input type="date" {...register("prochaineDate")} />
+                            </div>
+                        )}
+                    </div>
+
                     <div className="space-y-2">
-                        <Label>Contenu du compte-rendu *</Label>
+                        <Label>Déroulé / Contenu du compte-rendu *</Label>
                         <textarea
                             {...register("contenu")}
-                            className="w-full min-h-[200px] p-3 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full min-h-[150px] p-3 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Rédigez le compte-rendu de l'audience..."
                         />
                         {errors.contenu && (
@@ -156,30 +186,15 @@ export function FlashCrFormDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Destinataires (emails séparés par des virgules) *</Label>
-                        <Input
-                            {...register("destinataires")}
-                            placeholder="email1@example.com, email2@example.com"
-                        />
-                        {errors.destinataires && (
-                            <p className="text-sm text-red-600">{errors.destinataires.message}</p>
-                        )}
+                        <Label>Notes rapides (Optionnel)</Label>
+                        <Input {...register("notesRapides")} placeholder="Instructions internes, To-Do..." />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Statut d'envoi</Label>
-                        <Select
-                            value={watch("statutEnvoi")}
-                            onValueChange={(value) => setValue("statutEnvoi", value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="DRAFT">Brouillon</SelectItem>
-                                <SelectItem value="SENT">Envoyé</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="flex items-center space-x-2 pt-2 pb-2">
+                        <input type="checkbox" id="envoyerEmail" {...register("envoyerEmail")} className="rounded border-slate-300 w-4 h-4 cursor-pointer" />
+                        <Label htmlFor="envoyerEmail" className="font-normal cursor-pointer select-none">
+                            Envoyer automatiquement le Flash CR par email au client
+                        </Label>
                     </div>
 
                     <DialogFooter>

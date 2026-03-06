@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { api } from "@/lib/api"
 import { InvoiceFormDialog } from "@/components/facturation/invoice-form-dialog"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
@@ -24,12 +25,36 @@ export default function FacturationPage() {
     const fetchInvoices = async () => {
         try {
             setLoading(true)
-            const response = await fetch('/api/invoices')
-            if (!response.ok) throw new Error('Failed to fetch invoices')
-            const data = await response.json()
-            setInvoices(data)
+            const [paiementsRes, clientsRes, dossiersRes] = await Promise.all([
+                api.get('/api/v1/paiements'),
+                api.get('/api/v1/clients'),
+                api.get('/api/v1/dossiers'),
+            ])
+            const rawPaiements = paiementsRes.data.data || []
+            const clients = clientsRes.data.data || clientsRes.data || []
+            const dossiers = dossiersRes.data.data || dossiersRes.data || []
+
+            const mappedInvoices = rawPaiements.map((p: any) => {
+                const clientObj = clients.find((c: any) => c.id === p.client_id)
+                const dossierObj = dossiers.find((d: any) => d.id === p.dossier_id)
+                return {
+                    id: p.id,
+                    numero: `PAY-${p.id.substring(0, 6).toUpperCase()}`,
+                    date: p.date_reception,
+                    dateEcheance: p.date_reception,
+                    client: clientObj ? { type: clientObj.statut === 'PM' ? 'ENTREPRISE' : 'PARTICULIER', raisonSociale: clientObj.raison_sociale, nom: clientObj.nom, prenom: clientObj.prenom } : null,
+                    dossier: dossierObj ? { numero: dossierObj.reference || dossierObj.id } : null,
+                    dossierId: p.dossier_id,
+                    montantHT: p.montant,
+                    montantTTC: p.montant,
+                    montantPaye: p.montant,
+                    statut: "PAYEE",
+                    attachmentUrl: false
+                }
+            })
+            setInvoices(mappedInvoices)
         } catch (error) {
-            console.error('Error fetching invoices:', error)
+            console.error('Error fetching paiements:', error)
         } finally {
             setLoading(false)
         }
@@ -42,7 +67,7 @@ export default function FacturationPage() {
     // Summary Metrics
     const totalTTC = invoices.reduce((acc, inv) => acc + (inv.montantTTC || 0), 0)
     const totalPaid = invoices.reduce((acc, inv) => acc + (inv.montantPaye || 0), 0)
-    const totalPending = totalTTC - totalPaid
+    const totalPending = 0 // Tous les paiements enregistrés sont "Payés"
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesStatus = statusFilter === "ALL" || inv.statut === statusFilter
@@ -142,7 +167,7 @@ export default function FacturationPage() {
                                 onClick={() => setDialogOpen(true)}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Saisir Facture
+                                Enregistrer Paiement
                             </Button>
                         </>
                     )}
@@ -156,15 +181,12 @@ export default function FacturationPage() {
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead className="bg-slate-50 sticky top-0 z-20 shadow-sm">
                                 <tr>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-32">N° Facture</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">Date</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 min-w-[200px]">Client / Dossier / Aud.</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-right">Montant HT</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-right">Montant TTC</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-right">Encaissé</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-right">Reste</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-32">Référence</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">Reçu le</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 min-w-[200px]">Client / Dossier</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">Type</th>
+                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-right">Montant</th>
                                     <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-center">Statut</th>
-                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-center">Pièce</th>
                                     <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-10"></th>
                                 </tr>
                             </thead>
@@ -181,10 +203,7 @@ export default function FacturationPage() {
                                                 </button>
                                             </td>
                                             <td className="px-4 py-3 text-slate-600 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                                <div className="flex flex-col">
-                                                    <span>{format(new Date(inv.date), "dd/MM/yyyy")}</span>
-                                                    {isLate && <span className="text-[10px] text-red-600 font-bold">Retard</span>}
-                                                </div>
+                                                <span>{format(new Date(inv.date), "dd/MM/yyyy")}</span>
                                             </td>
                                             <td className="px-4 py-3 border-r border-transparent group-hover:border-slate-100">
                                                 <div className="flex flex-col gap-0.5">
@@ -197,41 +216,17 @@ export default function FacturationPage() {
                                                                 {inv.dossier?.numero || inv.dossierId}
                                                             </span>
                                                         )}
-                                                        {inv.audienceId && (
-                                                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded truncate max-w-[120px]">
-                                                                Audit. {inv.audienceId}
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-mono text-slate-500 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                                {formatCurrency(inv.montantHT)}
+                                            <td className="px-4 py-3 text-slate-600 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap capitalize">
+                                                {inv.type}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono font-medium text-slate-900 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                                {formatCurrency(inv.montantTTC)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono text-emerald-600 border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
                                                 {formatCurrency(inv.montantPaye)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono font-bold border-r border-transparent group-hover:border-slate-100 whitespace-nowrap">
-                                                <span className={remaining > 0 ? "text-red-600" : "text-slate-300"}>
-                                                    {formatCurrency(remaining)}
-                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-center border-r border-transparent group-hover:border-slate-100">
                                                 <StatusBadge status={inv.statut} />
-                                            </td>
-                                            <td className="px-4 py-3 text-center border-r border-transparent group-hover:border-slate-100">
-                                                {inv.attachmentUrl ? (
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
-                                                        <Paperclip className="w-4 h-4" />
-                                                    </Button>
-                                                ) : (
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600">
-                                                        <Plus className="w-4 h-4" />
-                                                    </Button>
-                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
@@ -255,9 +250,8 @@ export default function FacturationPage() {
                         </table>
                     </div>
                 </div>
-            ) : (
-                <FinancialStatsView />
-            )}
+            ) : <FinancialStatsView totalPaid={totalPaid} countPaiements={invoices.length} />
+            }
 
             {/* Invoice Form Dialog */}
             <InvoiceFormDialog
