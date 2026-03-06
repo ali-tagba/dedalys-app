@@ -21,6 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { api } from "@/lib/api"
 
 // Liste des avocats fictifs
 const AVOCATS = [
@@ -77,8 +78,8 @@ export function DossierFormDialog({
 
     useEffect(() => {
         if (open) {
-            fetch('/api/clients')
-                .then(res => res.json())
+            api.get('/api/v1/clients')
+                .then(res => res.data.data || [])
                 .then(data => setClients(data))
                 .catch(err => console.error('Error fetching clients:', err))
         }
@@ -87,22 +88,41 @@ export function DossierFormDialog({
     const onSubmit = async (data: DossierFormData) => {
         setLoading(true)
         try {
-            const url = isEdit ? `/api/dossiers/${dossier.id}` : "/api/dossiers"
-            const method = isEdit ? "PATCH" : "POST"
+            // Mapping frontend internal status -> backend expected status
+            const statusMap: Record<string, string> = {
+                'EN_COURS': 'ouvert',
+                'TERMINE': 'cloture',
+                'EN_ATTENTE': 'en_instance',
+                'CLOTURE': 'cloture'
+            };
 
-            const response = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            })
+            // Mapping frontend internal type -> backend expected type
+            const typeMap: Record<string, string> = {
+                'CONTENTIEUX': 'contentieux',
+                'PRE_CONTENTIEUX': 'pre_contentieux',
+                'TRANSACTIONNEL': 'transactionnel',
+                'CONSEIL': 'conseil'
+            };
 
-            if (!response.ok) throw new Error("Failed to save dossier")
+            const payload: any = {
+                client_id: data.clientId,
+                type: data.typeDossier ? typeMap[data.typeDossier] || 'conseil' : 'conseil',
+                statut: data.statut ? statusMap[data.statut] || 'ouvert' : 'ouvert',
+                juridiction: data.juridiction || null,
+                description: data.description || null
+            };
+
+            if (isEdit) {
+                await api.patch(`/api/v1/dossiers/${dossier.id}`, payload)
+            } else {
+                await api.post("/api/v1/dossiers/", payload)
+            }
 
             onSuccess?.()
             onOpenChange(false)
-        } catch (error) {
-            console.error("Error saving dossier:", error)
-            alert("Erreur lors de l'enregistrement du dossier")
+        } catch (error: any) {
+            console.error("Error saving dossier:", error?.response?.data || error)
+            alert("Erreur lors de l'enregistrement du dossier: " + (error?.response?.data?.detail || error.message))
         } finally {
             setLoading(false)
         }

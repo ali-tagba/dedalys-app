@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ClientFilters } from "@/components/clients/client-filters"
 import { ClientTable } from "@/components/clients/client-table"
 import { ClientFormDialog } from "@/components/clients/client-form-dialog"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,10 +23,21 @@ export default function ClientsPage() {
     const fetchClients = async () => {
         try {
             setLoading(true)
-            const response = await fetch('/api/clients')
-            if (!response.ok) throw new Error('Failed to fetch clients')
-            const data = await response.json()
-            setClients(data)
+            const response = await api.get('/api/v1/clients')
+            // FastAPI pagination shape is { data: [...], total: X }
+            const clientsData = response.data.data || []
+            // Map FastAPI format to Frontend expected format
+            const mappedClients = clientsData.map((c: any) => ({
+                id: c.id,
+                type: c.statut === 'PM' ? 'PERSONNE_MORALE' : 'PERSONNE_PHYSIQUE',
+                nom: c.nom || '',
+                prenom: c.prenom || '',
+                raisonSociale: c.raison_sociale || '',
+                email: c.email_principal || '',
+                telephone: c.telephone || '',
+                _count: { dossiers: 0, invoices: 0 }
+            }))
+            setClients(mappedClients)
         } catch (error) {
             console.error('Error fetching clients:', error)
         } finally {

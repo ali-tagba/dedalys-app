@@ -21,6 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { api } from "@/lib/api"
 
 // Liste des juridictions de Côte d'Ivoire
 const JURIDICTIONS = [
@@ -36,14 +37,7 @@ const JURIDICTIONS = [
     "Cour suprême"
 ]
 
-// Liste des avocats fictifs
-const AVOCATS = [
-    "Maître Konan",
-    "Maître Touré Aminata",
-    "Maître Yao Kouadio",
-    "Maître Diallo Mamadou",
-    "Maître Bamba Clarisse"
-]
+// Removed static AVOCATS array, will fetch dynamically
 
 const audienceSchema = z.object({
     titre: z.string().min(1, "Titre requis"),
@@ -77,6 +71,7 @@ export function AudienceFormDialog({
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<any[]>([])
     const [dossiers, setDossiers] = useState<any[]>([])
+    const [avocats, setAvocats] = useState<any[]>([])
     const isEdit = !!audience
 
     const {
@@ -87,7 +82,12 @@ export function AudienceFormDialog({
         formState: { errors },
     } = useForm<AudienceFormData>({
         resolver: zodResolver(audienceSchema),
-        defaultValues: audience || {
+        defaultValues: audience ? {
+            ...audience,
+            avocat: audience.avocat_assigne_id,
+            clientId: audience.client_id,
+            dossierId: audience.dossier_id,
+        } : {
             statut: "A_VENIR",
         },
     })
@@ -96,14 +96,16 @@ export function AudienceFormDialog({
 
     useEffect(() => {
         if (open) {
-            // Fetch clients and dossiers
+            // Fetch clients, dossiers and avocats
             Promise.all([
-                fetch('/api/clients').then(res => res.json()),
-                fetch('/api/dossiers').then(res => res.json()),
+                api.get('/api/v1/clients').then(res => res.data.data || res.data || []),
+                api.get('/api/v1/dossiers').then(res => res.data.data || res.data || []),
+                api.get('/api/v1/utilisateurs').then(res => res.data || [])
             ])
-                .then(([clientsData, dossiersData]) => {
+                .then(([clientsData, dossiersData, avocatsData]) => {
                     setClients(clientsData)
                     setDossiers(dossiersData)
+                    setAvocats(avocatsData)
                 })
                 .catch(err => console.error('Error fetching data:', err))
         }
@@ -114,7 +116,7 @@ export function AudienceFormDialog({
         if (selectedDossierId) {
             const selectedDossier = dossiers.find(d => d.id === selectedDossierId)
             if (selectedDossier) {
-                setValue("clientId", selectedDossier.clientId)
+                setValue("clientId", selectedDossier.client_id || selectedDossier.clientId)
             }
         }
     }, [selectedDossierId, dossiers, setValue])
@@ -122,22 +124,31 @@ export function AudienceFormDialog({
     const onSubmit = async (data: AudienceFormData) => {
         setLoading(true)
         try {
-            const url = isEdit ? `/api/audiences/${audience.id}` : "/api/audiences"
-            const method = isEdit ? "PATCH" : "POST"
+            const payload: any = {
+                titre: data.titre,
+                date: data.date,
+                heure: data.heure || "08:00", // Fix missing time which causes 422
+                duree: data.duree || null,
+                juridiction: data.juridiction,
+                salle_audience: data.salleAudience || null,
+                dossier_id: data.dossierId,
+                avocat_assigne_id: data.avocat || (avocats.length > 0 ? avocats[0].id : null), // Fallback if missed
+                type: 'audience',
+                statut: data.statut || "A_VENIR",
+                notes: data.notes || null
+            }
 
-            const response = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            })
-
-            if (!response.ok) throw new Error("Failed to save audience")
+            if (isEdit) {
+                await api.patch(`/api/v1/audiences/${audience.id}`, payload)
+            } else {
+                await api.post("/api/v1/audiences/", payload)
+            }
 
             onSuccess?.()
             onOpenChange(false)
-        } catch (error) {
-            console.error("Error saving audience:", error)
-            alert("Erreur lors de l'enregistrement de l'audience")
+        } catch (error: any) {
+            console.error("Error saving audience:", error?.response?.data || error)
+            alert("Erreur lors de l'enregistrement de l'audience: " + (error?.response?.data?.detail || error.message))
         } finally {
             setLoading(false)
         }
@@ -173,9 +184,9 @@ export function AudienceFormDialog({
                             <SelectContent>
                                 {dossiers.map((dossier) => (
                                     <SelectItem key={dossier.id} value={dossier.id}>
-                                        {dossier.numero} - {clients.find(c => c.id === dossier.clientId)?.type === "PERSONNE_PHYSIQUE"
-                                            ? `${clients.find(c => c.id === dossier.clientId)?.nom} ${clients.find(c => c.id === dossier.clientId)?.prenom}`
-                                            : clients.find(c => c.id === dossier.clientId)?.raisonSociale}
+                                        {dossier.reference || dossier.numero} - {clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.type === "PERSONNE_PHYSIQUE"
+                                            ? `${clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.nom} ${clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.prenom}`
+                                            : clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.raison_sociale || clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.raisonSociale}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -242,9 +253,9 @@ export function AudienceFormDialog({
                                     <SelectValue placeholder="Sélectionner un avocat" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {AVOCATS.map((avocat) => (
-                                        <SelectItem key={avocat} value={avocat}>
-                                            {avocat}
+                                    {avocats.map((avocat) => (
+                                        <SelectItem key={avocat.id} value={avocat.id}>
+                                            {avocat.prenom} {avocat.nom}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

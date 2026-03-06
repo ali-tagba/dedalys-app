@@ -152,6 +152,14 @@ npm run dev
 
 L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
 
+## 🌐 Déploiement sur Vercel
+
+Le projet est configuré pour être déployé facilement sur Vercel :
+1. Poussez votre code sur la branche `main` via `git push`.
+2. Connectez le dépôt GitHub à Vercel.
+3. N'oubliez pas de provisionner une base de données PostgreSQL (via l'onglet Storage de Vercel) et de définir la variable `DATABASE_URL`.
+> 💡 *Un guide détaillé étape par étape est disponible dans le fichier [VERCEL_DEPLOYMENT_GUIDE.md](VERCEL_DEPLOYMENT_GUIDE.md).*
+
 ## 📚 Documentation
 
 La documentation complète est organisée dans le dossier `docs/` :

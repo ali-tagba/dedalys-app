@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { DossierFormDialog } from "@/components/dossiers/dossier-form-dialog"
+import { api } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -60,10 +61,21 @@ export default function DossiersPage() {
     const fetchDossiers = async () => {
         try {
             setLoading(true)
-            const response = await fetch('/api/dossiers')
-            if (!response.ok) throw new Error('Failed to fetch dossiers')
-            const data = await response.json()
-            setDossiers(data)
+            const response = await api.get('/api/v1/dossiers')
+            const dossiersData = response.data.data || []
+
+            // Map FastAPI format to Frontend format for UI compatibility
+            const mappedDossiers = dossiersData.map((d: any) => ({
+                ...d,
+                statut: d.statut === 'ouvert' ? 'EN_COURS' : d.statut === 'en_instance' ? 'EN_ATTENTE' : d.statut === 'cloture' ? 'CLOTURE' : 'EN_COURS',
+                type: d.type === 'contentieux' ? 'LITIGE' : d.type === 'conseil' ? 'CONSEIL' : 'AUTRE',
+                juridiction: { nom: d.juridiction || "Non spécifié", ville: "" },
+                audiences: [], // Assuming audiences relation isn't fetched directly natively here, you will need to map it if FastAPI includes it later
+                intitule: d.titre || "Dossier sans titre",
+                numero: d.reference || "N/A"
+            }))
+
+            setDossiers(mappedDossiers)
         } catch (error) {
             console.error('Error fetching dossiers:', error)
         } finally {

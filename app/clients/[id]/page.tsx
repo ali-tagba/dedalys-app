@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { api } from "@/lib/api"
 import { ClientFormDialog } from "@/components/clients/client-form-dialog"
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog"
 import { Button } from "@/components/ui/button"
@@ -42,15 +43,54 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     const fetchClient = async () => {
         try {
             setLoading(true)
-            const response = await fetch(`/api/clients/${resolvedParams.id}`)
-            if (!response.ok) {
-                if (response.status === 404) return notFound()
-                throw new Error('Failed to fetch client')
+
+            // Parallel Fetch: Client + Dossiers
+            const [clientRes, dossiersRes] = await Promise.all([
+                api.get(`/api/v1/clients/${resolvedParams.id}`),
+                api.get(`/api/v1/dossiers/?client_id=${resolvedParams.id}`)
+            ])
+
+            const data = clientRes.data.data || clientRes.data
+            const dossiersData = (dossiersRes.data.data || dossiersRes.data || [])
+
+            // Mapping statut / type for dossier
+            const statusMap: Record<string, string> = { 'ouvert': 'EN_COURS', 'en_instance': 'EN_ATTENTE', 'cloture': 'CLOTURE' }
+            const typeMap: Record<string, string> = { 'contentieux': 'CONTENTIEUX', 'pre_contentieux': 'PRE_CONTENTIEUX', 'transactionnel': 'TRANSACTIONNEL', 'conseil': 'CONSEIL' }
+
+            const mappedDossiers = Array.isArray(dossiersData) ? dossiersData.map((d: any) => ({
+                id: d.id,
+                numero: d.reference || "N/A",
+                statut: statusMap[d.statut] || 'EN_COURS',
+                type: typeMap[d.type] || 'CONSEIL',
+                juridiction: d.juridiction || "Tribunal Non Défini",
+                updatedAt: d.updated_at || d.created_at,
+            })) : [];
+
+            const mappedClient: any = {
+                id: data.id,
+                type: data.statut === 'PM' ? 'PERSONNE_MORALE' : 'PERSONNE_PHYSIQUE',
+                nom: data.nom || '',
+                prenom: data.prenom || '',
+                raisonSociale: data.raison_sociale || '',
+                email: data.email_principal || '',
+                telephone: data.telephone || '',
+                adresse: data.adresse_complete || '',
+                ville: data.ville || '',
+                pays: data.pays || "Côte d'Ivoire",
+                formeJuridique: data.forme_juridique,
+                numeroRCCM: data.rccm,
+                _count: { dossiers: mappedDossiers.length },
+                dossiers: mappedDossiers,
+                invoices: [], // Pending backend implementation for Factures
+                contacts: [], // Pending backend implementation for Contacts
+                audiences: [], // Pending backend implementation for Audiences direct mapping
+                notes: data.notes || "Client régulier du cabinet."
             }
-            const data = await response.json()
-            setClient(data)
-        } catch (error) {
+
+            setClient(mappedClient)
+        } catch (error: any) {
             console.error('Error fetching client:', error)
+            if (error?.response?.status === 404) return notFound()
         } finally {
             setLoading(false)
         }
@@ -59,10 +99,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     const handleDelete = async () => {
         if (!confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) return
         try {
-            const response = await fetch(`/api/clients/${resolvedParams.id}`, {
-                method: 'DELETE',
-            })
-            if (!response.ok) throw new Error('Failed to delete client')
+            await api.delete(`/api/v1/clients/${resolvedParams.id}`)
             window.location.href = '/clients'
         } catch (error) {
             console.error('Error deleting client:', error)

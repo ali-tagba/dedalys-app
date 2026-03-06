@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { api } from "@/lib/api"
 
 const clientSchema = z.object({
     type: z.enum(["PERSONNE_PHYSIQUE", "PERSONNE_MORALE"]),
@@ -81,22 +82,41 @@ export function ClientFormDialog({
     const onSubmit = async (data: ClientFormData) => {
         setLoading(true)
         try {
-            const url = isEdit ? `/api/clients/${client.id}` : "/api/clients"
-            const method = isEdit ? "PATCH" : "POST"
+            const isPM = data.type === 'PERSONNE_MORALE';
 
-            const response = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            })
+            // Map frontend form data to FastAPI backend schema
+            const payload: any = {
+                statut: isPM ? 'PM' : 'PP',
+                email_principal: data.email || null,
+                telephone: data.telephone || null,
+                adresse_complete: data.adresse || null,
+                pays: data.pays || "Côte d'Ivoire",
+                ville: data.ville || null
+            };
 
-            if (!response.ok) throw new Error("Failed to save client")
+            if (isPM) {
+                payload.raison_sociale = data.raisonSociale;
+                payload.forme_juridique = data.formeJuridique || 'SA'; // requis backend
+                payload.representant_legal = data.representantLegal || 'Inconnu'; // requis backend
+                payload.rccm = data.numeroRCCM || null;
+                payload.siege_social = data.siegeSocial || null;
+            } else {
+                payload.nom = data.nom;
+                payload.prenom = data.prenom;
+                payload.secteur_activite = data.profession || null;
+            }
+
+            if (isEdit) {
+                await api.patch(`/api/v1/clients/${client.id}`, payload);
+            } else {
+                await api.post("/api/v1/clients/", payload);
+            }
 
             onSuccess?.()
             onOpenChange(false)
-        } catch (error) {
-            console.error("Error saving client:", error)
-            alert("Erreur lors de l'enregistrement du client")
+        } catch (error: any) {
+            console.error("Error saving client:", error?.response?.data || error)
+            alert("Erreur lors de l'enregistrement du client: " + (error?.response?.data?.detail || error.message))
         } finally {
             setLoading(false)
         }

@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -75,15 +76,72 @@ export default function DossierDetailPage({ params }: { params: Promise<{ id: st
     const fetchDossier = async () => {
         try {
             setLoading(true)
-            const response = await fetch(`/api/dossiers/${resolvedParams.id}`)
-            if (!response.ok) {
-                if (response.status === 404) return notFound()
-                throw new Error('Failed to fetch dossier')
+
+            // 1. Get Dossier
+            const response = await api.get(`/api/v1/dossiers/${resolvedParams.id}`)
+            const data = response.data.data || response.data
+
+            // 2. Map Status & Type
+            const statusMap: Record<string, string> = {
+                'ouvert': 'EN_COURS',
+                'en_instance': 'EN_ATTENTE',
+                'cloture': 'CLOTURE'
+            };
+            const typeMap: Record<string, string> = {
+                'contentieux': 'CONTENTIEUX',
+                'pre_contentieux': 'PRE_CONTENTIEUX',
+                'transactionnel': 'TRANSACTIONNEL',
+                'conseil': 'CONSEIL'
+            };
+
+            const mappedDossier: any = {
+                ...data,
+                statut: statusMap[data.statut] || 'EN_COURS',
+                typeDossier: typeMap[data.type] || 'CONSEIL',
+                numero: data.reference || "DRAFT",
+                dateOuverture: data.created_at,
+                clientId: data.client_id,
+                juridiction: data.juridiction || "Non spécifié",
+                description: data.description || "",
+                avocatAssigne: "Non assigné",
+                files: []
+            };
+
+            // 3. Try to get Client details if there is a client_id
+            if (data.client_id) {
+                try {
+                    const clientRes = await api.get(`/api/v1/clients/${data.client_id}`)
+                    mappedDossier.client = clientRes.data.data
+                } catch (e) {
+                    console.error("Could not fetch client details", e)
+                    mappedDossier.client = { nom: "Inconnu", raisonSociale: "Client N°" + data.client_id }
+                }
+            } else {
+                mappedDossier.client = { nom: "Inconnu" }
             }
-            const data = await response.json()
-            setDossier(data)
-        } catch (error) {
+
+            // 4. Try to get Fichiers
+            try {
+                const filesRes = await api.get(`/api/v1/fichiers/dossier/${resolvedParams.id}`)
+                const filesData = filesRes.data || [] // FastAPI returns a List[FichierResponse] directly here or structured, assuming list
+                // Map to frontend expected file struct
+                mappedDossier.files = (Array.isArray(filesData) ? filesData : filesData.data || []).map((f: any) => ({
+                    id: f.id,
+                    type: 'FILE', // Flat files from backend for now
+                    name: f.nom,
+                    size: f.taille,
+                    mimeType: f.type_fichier,
+                    url: f.url,
+                    parentId: null // Fallback since folders aren't implemented yet in backend DB schema natively
+                }))
+            } catch (e) {
+                console.error("Could not fetch files", e)
+            }
+
+            setDossier(mappedDossier)
+        } catch (error: any) {
             console.error('Error fetching dossier:', error)
+            if (error.response?.status === 404) return notFound()
         } finally {
             setLoading(false)
         }

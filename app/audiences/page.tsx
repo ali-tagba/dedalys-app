@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { api } from "@/lib/api"
 import { AudienceFormDialog } from "@/components/audiences/audience-form-dialog"
 import { Button } from "@/components/ui/button"
 import { AudienceList } from "../../components/audiences/audience-list"
@@ -17,10 +18,14 @@ export default function AudiencesPage() {
     const fetchAudiences = async () => {
         try {
             setLoading(true)
-            const response = await fetch('/api/audiences')
-            if (!response.ok) throw new Error('Failed to fetch audiences')
-            const data = await response.json()
-            setAudiences(data)
+            const response = await api.get('/api/v1/audiences')
+            const rawData = response.data.data || []
+            const mappedAudiences = rawData.map((a: any) => ({
+                ...a,
+                statut: a.statut || "A_VENIR", // fallback if no statut is defined or mapped
+                type: a.type === "reunion" ? "REUNION" : "AUDIENCE"
+            }))
+            setAudiences(mappedAudiences)
         } catch (error) {
             console.error('Error fetching audiences:', error)
         } finally {
