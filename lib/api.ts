@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dedalys-civ-dedalys-api.hf.space';
+/**
+ * Base URL pour les appels API :
+ * - Vide = routes Next.js (défaut, tout-en-un sur Vercel)
+ * - URL définie = backend externe (ex: Hugging Face Space dedalys-civ/dedalys-api)
+ */
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 
 export const api = axios.create({
     baseURL: API_URL,
