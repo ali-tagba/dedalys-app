@@ -6,7 +6,7 @@ import { FlashCrFormDialog } from "@/components/flash-cr/flash-cr-form-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Calendar, AlertCircle, CheckCircle2, Gavel, User, Briefcase, Plus } from "lucide-react"
+import { FileText, Calendar, AlertCircle, CheckCircle2, Gavel, User, Briefcase, Plus, Edit2, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 
@@ -17,6 +17,24 @@ export default function FlashCRPage() {
     const [filterMode, setFilterMode] = useState<"AVAILABLE" | "UNAVAILABLE">("AVAILABLE")
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedAudienceId, setSelectedAudienceId] = useState<string>()
+    const [selectedFlashCr, setSelectedFlashCr] = useState<any>(null)
+
+    const handleEdit = (cr: any) => {
+        setSelectedFlashCr(cr)
+        setDialogOpen(true)
+    }
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce Flash CR ? L'audience restera intacte.")) return
+        try {
+            await api.delete(`/api/v1/flash-cr/${id}`)
+            fetchData()
+        } catch (error) {
+            console.error(error)
+            alert("Erreur lors de la suppression.")
+        }
+    }
 
     const fetchData = async () => {
         try {
@@ -152,9 +170,20 @@ export default function FlashCRPage() {
                                                 <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200 shadow-none">
                                                     Disponible
                                                 </Badge>
-                                                <span className="text-xs font-mono text-slate-400">
-                                                    {format(new Date(cr.created_at || new Date()), "dd MMM yyyy", { locale: fr })}
-                                                </span>
+                                                <div className="flex gap-2 items-center">
+                                                    <span className="text-xs font-mono text-slate-400">
+                                                        {format(new Date(cr.created_at || new Date()), "dd MMM yyyy", { locale: fr })}
+                                                    </span>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-blue-600" onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleEdit(cr)
+                                                    }}>
+                                                        <Edit2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={(e) => handleDelete(cr.id, e)}>
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
                                             </div>
 
                                             <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-2">
@@ -238,10 +267,14 @@ export default function FlashCRPage() {
                 open={dialogOpen}
                 onOpenChange={(open) => {
                     setDialogOpen(open)
-                    if (!open) setSelectedAudienceId(undefined)
+                    if (!open) {
+                        setSelectedAudienceId(undefined)
+                        setSelectedFlashCr(null)
+                    }
                 }}
                 onSuccess={fetchData}
                 prefilledAudienceId={selectedAudienceId}
+                flashCr={selectedFlashCr}
             />
         </div>
     )

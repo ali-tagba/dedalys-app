@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { api } from "@/lib/api"
 
 const contactSchema = z.object({
     nom: z.string().min(1, "Nom requis"),
@@ -59,7 +60,13 @@ export function ContactFormDialog({
         formState: { errors },
     } = useForm<ContactFormData>({
         resolver: zodResolver(contactSchema),
-        defaultValues: contact || {
+        defaultValues: contact ? {
+            nom: contact.nom_complet?.split(' ').slice(1).join(' ') || contact.nom_complet || '',
+            prenom: contact.nom_complet?.split(' ')[0] || '',
+            fonction: contact.fonction || "CONTACT_ADMIN",
+            email: contact.email || "",
+            telephone: contact.telephone || ""
+        } : {
             fonction: "CONTACT_ADMIN",
         },
     })
@@ -68,17 +75,14 @@ export function ContactFormDialog({
         setLoading(true)
         try {
             const url = isEdit
-                ? `/api/contacts/${contact.id}`
-                : `/api/clients/${clientId}/contacts`
-            const method = isEdit ? "PATCH" : "POST"
+                ? `/api/v1/contacts/${contact.id}`
+                : `/api/v1/clients/${clientId}/contacts`
 
-            const response = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            })
-
-            if (!response.ok) throw new Error("Failed to save contact")
+            if (isEdit) {
+                await api.patch(url, data)
+            } else {
+                await api.post(url, data)
+            }
 
             onSuccess?.()
             onOpenChange(false)

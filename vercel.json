@@ -1,0 +1,4 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npx prisma generate 2>/dev/null || true && next build"
+}

@@ -1,133 +1,128 @@
 "use client"
 
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Client } from "@/lib/types/client"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Building2, User, ArrowRight } from "lucide-react"
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ClientTableProps {
     clients: Client[]
     getDossiersCount: (clientId: string) => number
+    onEdit?: (client: Client) => void
+    onDelete?: (id: string, e?: React.MouseEvent) => void
 }
 
-export function ClientTable({ clients, getDossiersCount }: ClientTableProps) {
-    return (
-        <div className="h-full w-full overflow-auto relative custom-scrollbar">
-            {/* Force table to have a minimum width to ensure horizontal scroll works on small screens */}
-            <table className="w-full caption-bottom text-sm min-w-[1000px]">
-                <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-sm">
-                    <TableRow className="hover:bg-slate-50 border-b border-slate-200">
-                        <TableHead className="w-[80px] pl-6">Type</TableHead>
-                        <TableHead className="min-w-[220px]">Nom / Raison Sociale</TableHead>
-                        <TableHead className="w-[200px]">Entreprise</TableHead>
-                        <TableHead className="w-[220px]">Email</TableHead>
-                        <TableHead className="w-[160px]">Téléphone</TableHead>
-                        <TableHead className="w-[160px]">Ville / Pays</TableHead>
-                        <TableHead className="w-[120px] text-center">Dossiers</TableHead>
-                        <TableHead className="w-[140px]">Facturation</TableHead>
-                        {/* Sticky Action Column */}
-                        <TableHead className="w-[120px] text-right sticky right-0 top-0 bg-slate-50 z-30 shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.05)] pr-6">
-                            Action
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {clients.map((client) => {
-                        const activeCaseCount = getDossiersCount(client.id)
-                        // Mock unpaid invoice check (To be replaced with real logic later)
-                        const hasUnpaidInvoices = Math.random() > 0.8
+export function ClientTable({ clients, getDossiersCount, onEdit, onDelete }: ClientTableProps) {
+    const router = useRouter()
 
-                        return (
-                            <TableRow
-                                key={client.id}
-                                className="group hover:bg-blue-50/30 transition-colors border-b border-slate-100 last:border-0 cursor-pointer"
-                            >
-                                <TableCell className="pl-6">
-                                    <div className={`
-                                        w-10 h-10 rounded-lg flex items-center justify-center
-                                        ${client.type === 'PERSONNE_MORALE' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}
-                                    `}>
-                                        {client.type === 'PERSONNE_MORALE' ? <Building2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="font-semibold text-slate-900">
-                                    <div className="flex flex-col">
-                                        <span className="truncate max-w-[200px]" title={client.type === "PERSONNE_PHYSIQUE" ? `${client.nom} ${client.prenom}` : client.raisonSociale}>
-                                            {client.type === "PERSONNE_PHYSIQUE" ? `${client.nom} ${client.prenom}` : client.raisonSociale}
+    return (
+        <table className="w-full text-left border-collapse min-w-[1000px]">
+            <thead className="bg-slate-50 sticky top-0 z-10 ring-1 ring-slate-200/50">
+                <tr>
+                    <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[80px] border-b border-slate-200 text-center">Type</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[150px] border-b border-slate-200">Nom / Raison Sociale</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[200px] border-b border-slate-200">Email</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[140px] border-b border-slate-200">Téléphone</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] border-b border-slate-200">Ville/Pays</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[100px] border-b border-slate-200">Dossiers</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] border-b border-slate-200">Facturation</th>
+                    <th className="py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px] border-b border-slate-200 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+                {clients.map((client) => {
+                    const activeCaseCount = getDossiersCount(client.id)
+                    const statutFact = (client as any).statut_facturation || "NON_REGLE"
+                    const isRegle = statutFact === "REGLE"
+                    const isPartiel = statutFact === "PARTIELLEMENT_REGLE"
+
+                    const statusColor = isRegle ? "bg-emerald-600" : isPartiel ? "bg-amber-500" : "bg-red-600"
+                    const statusTextColor = isRegle ? "text-emerald-600" : isPartiel ? "text-amber-600" : "text-red-600"
+                    const statusText = isRegle ? "Réglé" : isPartiel ? "Partiel" : "Non réglé"
+                    const statusBgColor = isRegle ? "bg-emerald-50" : isPartiel ? "bg-amber-50" : "bg-red-50"
+
+                    const navigateToClient = () => {
+                        router.push(`/clients/${client.id}`)
+                    }
+
+                    return (
+                        <tr
+                            key={client.id}
+                            onClick={navigateToClient}
+                            className="group hover:bg-slate-50 transition-colors cursor-pointer h-12"
+                        >
+                            <td className="py-3 px-6 text-center">
+                                <div className="flex shrink-0 mx-auto h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200">
+                                    {(client as any).logo_url && client.type === 'PERSONNE_MORALE' ? (
+                                        <img src={(client as any).logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    ) : (client as any).avatar_url && client.type === 'PERSONNE_PHYSIQUE' ? (
+                                        <img src={(client as any).avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="material-symbols-outlined text-slate-500 text-[18px]">
+                                            {client.type === 'PERSONNE_MORALE' ? 'business_center' : 'person'}
                                         </span>
-                                        {client.type === "PERSONNE_PHYSIQUE" && client.profession && (
-                                            <span className="text-xs text-slate-500 truncate font-normal">{client.profession}</span>
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-slate-600">
-                                    {client.type === "PERSONNE_MORALE" ? (
-                                        <span className="truncate max-w-[180px] block font-medium" title={client.raisonSociale}>
-                                            {client.raisonSociale}
-                                        </span>
-                                    ) : (
-                                        <span className="text-slate-400 italic text-xs">-</span>
                                     )}
-                                </TableCell>
-                                <TableCell className="text-slate-600">
-                                    <span className="truncate max-w-[200px] block text-sm" title={client.email}>{client.email}</span>
-                                </TableCell>
-                                <TableCell className="text-slate-600 font-mono text-sm">
-                                    {client.telephone}
-                                </TableCell>
-                                <TableCell className="text-slate-600">
-                                    <span className="truncate max-w-[150px] block" title={client.ville}>{client.ville || "-"}</span>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    {activeCaseCount > 0 ? (
-                                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100">
-                                            {activeCaseCount}
-                                        </Badge>
-                                    ) : (
-                                        <span className="text-slate-300 text-xs">-</span>
+                                </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm font-medium text-slate-900">
+                                <div className="flex flex-col">
+                                    <span>{client.type === "PERSONNE_PHYSIQUE" ? `${client.nom} ${client.prenom}` : client.raisonSociale}</span>
+                                    {client.type === "PERSONNE_PHYSIQUE" && client.profession && (
+                                        <span className="text-xs text-slate-500 font-normal">{client.profession}</span>
                                     )}
-                                </TableCell>
-                                <TableCell>
-                                    {hasUnpaidInvoices ? (
-                                        <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 shadow-sm">
-                                            Impayé
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50">
-                                            À jour
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                {/* Sticky Action Cell */}
-                                <TableCell className="text-right sticky right-0 bg-white group-hover:bg-blue-50/30 transition-colors shadow-[-10px_0_20px_-10px_rgba(0,0,0,0.05)] pr-6">
-                                    <Link href={`/clients/${client.id}`}>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="
-                                                border-blue-200 text-blue-700 bg-blue-50/50 
-                                                hover:bg-blue-600 hover:text-white hover:border-blue-600
-                                                transition-all font-semibold shadow-sm
-                                            "
-                                        >
-                                            Ouvrir
-                                            <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                                        </Button>
-                                    </Link>
-                                </TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </table>
-        </div>
+                                </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-slate-900">
+                                {client.email}
+                            </td>
+                            <td className="py-3 px-4 text-xs text-slate-500">
+                                {client.telephone}
+                            </td>
+                            <td className="py-3 px-4 text-xs text-slate-500">
+                                {client.ville || "-"}
+                            </td>
+                            <td className="py-3 px-4">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                                    {activeCaseCount} Actif{activeCaseCount !== 1 ? 's' : ''}
+                                </span>
+                            </td>
+                            <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                    <div className={`size-2 rounded-full ${statusColor}`}></div>
+                                    <span className={`text-sm font-medium ${statusTextColor} px-2 py-0.5 rounded-full ${statusBgColor}`}>{statusText}</span>
+                                </div>
+                            </td>
+                            <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="flex items-center justify-center w-8 h-8 rounded hover:bg-slate-200 text-slate-500 hover:text-blue-600 transition-colors ml-auto mr-[-8px]">
+                                            <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); navigateToClient(); }} className="gap-2 cursor-pointer">
+                                            <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                            Voir les informations
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onEdit?.(client); }} className="gap-2 cursor-pointer">
+                                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                                            Modifier
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onDelete?.(client.id, e as any); }} className="text-red-600 focus:bg-red-50 focus:text-red-700 gap-2 cursor-pointer">
+                                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                                            Supprimer
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </td>
+                        </tr>
+                    )
+                })}
+            </tbody>
+        </table>
     )
 }

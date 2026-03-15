@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
     LayoutDashboard,
     Users,
@@ -10,9 +10,10 @@ import {
     FileText,
     CreditCard,
     Settings,
-    TrendingUp
+    LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
 
 const navigation = [
     { name: "Tableau de Bord", href: "/", icon: LayoutDashboard },
@@ -26,6 +27,16 @@ const navigation = [
 
 export function Sidebar() {
     const pathname = usePathname()
+    const router = useRouter()
+    const { user, signOut } = useAuth()
+
+    const userEmail = user?.email || "Utilisateur"
+    const userInitials = userEmail.substring(0, 2).toUpperCase()
+
+    const handleLogout = async () => {
+        await signOut()
+        router.replace('/auth')
+    }
 
     return (
         <div className="flex flex-col h-full bg-white">
@@ -67,17 +78,26 @@ export function Sidebar() {
             </nav>
 
             {/* User Profile */}
-            <div className="p-4 border-t border-slate-100">
+            <div className="p-4 border-t border-slate-100 space-y-2">
                 <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-600">
-                        AV
+                    <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-xs font-bold text-blue-700">
+                        {userInitials}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">Maître Demo</p>
-                        <p className="text-xs text-slate-500 truncate">Avocat Associé</p>
+                        <p className="text-sm font-semibold text-slate-900 truncate">{userEmail}</p>
+                        <p className="text-xs text-slate-500 truncate">
+                            {user ? "Connecté" : "Non connecté"}
+                        </p>
                     </div>
-                    <Settings className="h-4 w-4 text-slate-400 hover:text-blue-600 cursor-pointer transition-colors" />
                 </div>
+                <button
+                    id="logout-button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+                >
+                    <LogOut className="h-4 w-4 text-slate-400 group-hover:text-red-500 transition-colors" />
+                    Se déconnecter
+                </button>
             </div>
         </div>
     )

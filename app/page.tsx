@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { api } from "@/lib/api"
 import { KpiCard } from "@/components/ui/kpi-card"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -48,10 +49,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/dashboard/stats')
-      .then(res => res.json())
-      .then(data => {
-        setStats(data)
+    api.get('/api/dashboard/stats')
+      .then(res => {
+        setStats(res.data)
         setLoading(false)
       })
       .catch(err => {
@@ -110,7 +110,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard
           title="Clients"
-          value={loading ? "..." : stats.totalClients.toString()}
+          value={loading ? "..." : (stats?.totalClients || 0).toString()}
           subtitle="Total actifs"
           icon={Users}
           trend="up"
@@ -120,7 +120,7 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Dossiers Actifs"
-          value={loading ? "..." : stats.activeDossiers.toString()}
+          value={loading ? "..." : (stats?.activeDossiers || 0).toString()}
           subtitle="En cours"
           icon={FolderOpen}
           colorScheme="purple"
@@ -129,7 +129,7 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Audiences"
-          value={loading ? "..." : stats.weekAudiences.toString()}
+          value={loading ? "..." : (stats?.weekAudiences || 0).toString()}
           subtitle="Cette semaine"
           icon={Calendar}
           colorScheme="orange"
@@ -138,7 +138,7 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Facturation"
-          value={loading ? "..." : stats.totalRevenue.replace('M', ' M FCFA').replace('k', ' k FCFA')} // Simple formatting fix
+          value={loading ? "..." : (stats?.totalRevenue || "0M").replace('M', ' M FCFA').replace('k', ' k FCFA')} // Simple formatting fix
           subtitle="Encaissements"
           icon={TrendingUp}
           trend="up"
@@ -193,9 +193,9 @@ export default function Dashboard() {
             <CardContent className="p-0">
               {loading ? (
                 <div className="p-4 text-center">Chargement...</div>
-              ) : stats.upcomingAudiences.length > 0 ? (
+              ) : stats?.upcomingAudiences?.length > 0 ? (
                 <div className="divide-y divide-slate-100">
-                  {stats.upcomingAudiences.slice(0, 3).map((audience, i) => (
+                  {(stats?.upcomingAudiences || []).slice(0, 3).map((audience, i) => (
                     <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex flex-col items-center justify-center">
