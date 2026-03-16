@@ -30,7 +30,7 @@ const flashCrSchema = z.object({
     prochaineDate: z.string().optional(),
     contenu: z.string().min(1, "Contenu requis"),
     notesRapides: z.string().optional(),
-    envoyerEmail: z.boolean().default(false),
+    envoyerEmail: z.boolean().optional(),
 })
 
 type FlashCrFormData = z.infer<typeof flashCrSchema>
@@ -91,22 +91,21 @@ export function FlashCrFormDialog({
                 audience_id: data.audienceId,
                 type_decision: data.typeDecision,
                 prochaine_date: data.prochaineDate || null,
-                contenu: data.contenu,
-                notes_rapides: data.notesRapides || null,
-                envoyer_email: data.envoyerEmail,
+                notes_rapides: data.notesRapides || data.contenu || null,
+                envoyer_email: data.envoyerEmail || false,
             }
 
             if (isEdit) {
                 await api.patch(`/api/v1/flash-cr/${flashCr.id}`, payload)
             } else {
-                await api.post("/api/v1/flash-cr/", payload)
+                await api.post('/api/v1/flash-cr', payload)
             }
 
             onSuccess?.()
             onOpenChange(false)
         } catch (error: any) {
             console.error("Error saving FlashCR:", error?.response?.data || error)
-            alert("Erreur lors de l'enregistrement du Flash CR: " + (error?.response?.data?.detail || error.message))
+            alert("Erreur lors de l'enregistrement du Flash CR: " + (error?.response?.data?.error || error.message))
         } finally {
             setLoading(false)
         }

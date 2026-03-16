@@ -14,6 +14,23 @@ export default function AudiencesPage() {
     const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar")
     const [filterStatus, setFilterStatus] = useState<"ALL" | "UPCOMING" | "COMPLETED" | "ARCHIVED">("UPCOMING")
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [selectedAudience, setSelectedAudience] = useState<any>(null)
+
+    const handleEdit = (audience: any) => {
+        setSelectedAudience(audience)
+        setDialogOpen(true)
+    }
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette audience ? Cette action est irréversible.")) return
+        try {
+            await api.delete(`/api/v1/audiences/${id}`)
+            fetchAudiences()
+        } catch (e) {
+            console.error(e)
+            alert("Erreur lors de la suppression de l'audience.")
+        }
+    }
 
     const fetchAudiences = async () => {
         try {
@@ -22,8 +39,8 @@ export default function AudiencesPage() {
             const rawData = response.data.data || []
             const mappedAudiences = rawData.map((a: any) => ({
                 ...a,
-                statut: a.statut || "A_VENIR", // fallback if no statut is defined or mapped
-                type: a.type === "reunion" ? "REUNION" : "AUDIENCE"
+                statut: a.statut || "A_VENIR",
+                type: a.type === "reunion" ? "REUNION" : "AUDIENCE",
             }))
             setAudiences(mappedAudiences)
         } catch (error) {
@@ -93,7 +110,10 @@ export default function AudiencesPage() {
                         <Button
                             size="default"
                             className="shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                            onClick={() => setDialogOpen(true)}
+                            onClick={() => {
+                                setSelectedAudience(null)
+                                setDialogOpen(true)
+                            }}
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             Nouvelle Audience
@@ -130,15 +150,19 @@ export default function AudiencesPage() {
                 {viewMode === "calendar" ? (
                     <AudienceCalendar audiences={filteredAudiences} />
                 ) : (
-                    <AudienceList audiences={filteredAudiences} />
+                    <AudienceList audiences={filteredAudiences} onEdit={handleEdit} onDelete={handleDelete} />
                 )}
             </div>
 
             {/* Audience Form Dialog */}
             <AudienceFormDialog
                 open={dialogOpen}
-                onOpenChange={setDialogOpen}
+                onOpenChange={(open) => {
+                    setDialogOpen(open)
+                    if (!open) setSelectedAudience(null)
+                }}
                 onSuccess={fetchAudiences}
+                audience={selectedAudience}
             />
         </div>
     )

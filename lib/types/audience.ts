@@ -3,17 +3,22 @@ export type AudienceStatus = "UPCOMING" | "COMPLETED" | "CANCELLED" | "POSTPONED
 
 export interface Audience {
     id: string
-    titre: string | null // Changed from title to match schema
-    date: string // ISO Date string
+    titre?: string | null
+    date: string
     heure?: string | null
-    juridiction: string | null
-    avocat: string | null
-    clientId: string
-    dossierId: string
-    statut: string // "A_VENIR" | "TERMINEE" | "REPORTEE" | "ANNULEE"
+    juridiction?: string | null
+    avocat?: string | null
+    clientId?: string
+    dossierId?: string
+    statut?: string
+    resultat?: string | null
     notes?: string | null
+    salle_audience?: string | null
+    salleAudience?: string | null
+    duree?: string | null
     client?: any
     dossier?: any
+    utilisateurs?: { nom?: string; prenom?: string }
     flashCR?: any
 }
 

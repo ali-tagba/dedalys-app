@@ -1,92 +1,74 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase-server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
+        const supabase = createServerClient(request.headers.get('authorization'))
+
         const now = new Date()
         const startOfWeek = new Date(now)
         startOfWeek.setDate(now.getDate() - now.getDay())
         startOfWeek.setHours(0, 0, 0, 0)
-
         const endOfWeek = new Date(startOfWeek)
         endOfWeek.setDate(startOfWeek.getDate() + 7)
 
-        // KPI queries
+        // Run all KPI queries in parallel
         const [
-            totalClients,
-            activeDossiers,
-            weekAudiences,
-            invoiceStats,
-            upcomingAudiences
+            { count: totalClients },
+            { count: activeDossiers },
+            { count: weekAudiences },
+            { data: paiementsData },
+            { data: upcomingAudiences },
         ] = await Promise.all([
-            prisma.client.count(),
-            prisma.dossier.count({ where: { statut: 'EN_COURS' } }),
-            prisma.audience.count({
-                where: {
-                    date: {
-                        gte: startOfWeek,
-                        lt: endOfWeek
-                    }
-                }
-            }),
-            prisma.invoice.aggregate({
-                _sum: {
-                    montantPaye: true
-                }
-            }),
-            prisma.audience.findMany({
-                where: {
-                    date: { gte: now },
-                    statut: 'A_VENIR'
-                },
-                include: {
-                    client: true,
-                    dossier: true
-                },
-                orderBy: {
-                    date: 'asc'
-                },
-                take: 3
-            })
+            supabase.from('clients').select('*', { count: 'exact', head: true }).eq('is_archived', false),
+            supabase.from('dossiers').select('*', { count: 'exact', head: true }).eq('statut', 'EN_COURS').eq('is_archived', false),
+            supabase.from('audiences').select('*', { count: 'exact', head: true })
+                .gte('date_audience', startOfWeek.toISOString())
+                .lt('date_audience', endOfWeek.toISOString()),
+            supabase.from('paiements').select('montant_paye').eq('is_archived', false),
+            supabase.from('audiences')
+                .select('id, date_audience, titre, juridiction, dossiers(numero, clients(raison_sociale, nom, prenom, statut))')
+                .gte('date_audience', now.toISOString())
+                .eq('statut', 'A_VENIR')
+                .eq('is_archived', false)
+                .order('date_audience', { ascending: true })
+                .limit(3)
         ])
 
-        // Format revenue in millions
-        const totalRevenue = (invoiceStats._sum.montantPaye || 0) / 1000000
-        const revenueFormatted = totalRevenue.toFixed(1) + 'M'
+        // Sum revenue
+        const totalRevenueRaw = (paiementsData || []).reduce((sum: number, p: any) => sum + (p.montant_paye || 0), 0)
+        const totalRevenue = (totalRevenueRaw / 1000000).toFixed(1) + 'M'
 
-        // Format upcoming audiences for display
-        const formattedAudiences = upcomingAudiences.map(audience => {
-            const audienceDate = new Date(audience.date)
-            const clientName = audience.client.type === 'PERSONNE_MORALE'
-                ? audience.client.raisonSociale
-                : `${audience.client.prenom} ${audience.client.nom}`
+        // Format upcoming audiences
+        const formattedAudiences = (upcomingAudiences || []).map((a: any) => {
+            const audienceDate = new Date(a.date_audience)
+            const dossier = a.dossiers || {}
+            const client = dossier.clients || {}
+            const clientName = client.statut === 'PM'
+                ? (client.raison_sociale || 'Client')
+                : `${client.prenom || ''} ${client.nom || ''}`.trim() || 'Client'
 
-            // Check if urgent (within 3 days)
             const daysUntil = Math.ceil((audienceDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-            const isUrgent = daysUntil <= 3
 
             return {
                 date: audienceDate.getDate().toString(),
                 month: audienceDate.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase(),
-                title: audience.titre || 'Audience',
-                case: `${clientName} - ${audience.dossier.numero}`,
-                court: audience.juridiction || 'Non spécifié',
-                urgent: isUrgent
+                title: a.titre || 'Audience',
+                case: `${clientName} — ${dossier.numero || 'DOS-???'}`,
+                court: a.juridiction || 'Non spécifié',
+                urgent: daysUntil <= 3,
             }
         })
 
         return NextResponse.json({
-            totalClients,
-            activeDossiers,
-            weekAudiences,
-            totalRevenue: revenueFormatted,
-            upcomingAudiences: formattedAudiences
+            totalClients: totalClients || 0,
+            activeDossiers: activeDossiers || 0,
+            weekAudiences: weekAudiences || 0,
+            totalRevenue,
+            upcomingAudiences: formattedAudiences,
         })
-    } catch (error) {
+    } catch (error: any) {
         console.error('SERVER ERROR in /api/dashboard/stats:', error)
-        return NextResponse.json(
-            { error: 'Failed to fetch dashboard stats', details: String(error) },
-            { status: 500 }
-        )
+        return NextResponse.json({ error: 'Failed to fetch dashboard stats', details: String(error) }, { status: 500 })
     }
 }

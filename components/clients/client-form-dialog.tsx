@@ -43,6 +43,9 @@ const clientSchema = z.object({
     adresse: z.string().optional(),
     ville: z.string().optional(),
     pays: z.string(),
+    notes: z.string().optional(),
+    // Facturation
+    statutFacturation: z.string().optional(),
 })
 
 type ClientFormData = z.infer<typeof clientSchema>
@@ -71,9 +74,13 @@ export function ClientFormDialog({
         formState: { errors },
     } = useForm<ClientFormData>({
         resolver: zodResolver(clientSchema),
-        defaultValues: client || {
+        defaultValues: client ? {
+            ...client,
+            statutFacturation: client.statut_facturation || "NON_REGLE",
+        } : {
             type: "PERSONNE_MORALE",
             pays: "Côte d'Ivoire",
+            statutFacturation: "NON_REGLE",
         },
     })
 
@@ -84,20 +91,22 @@ export function ClientFormDialog({
         try {
             const isPM = data.type === 'PERSONNE_MORALE';
 
-            // Map frontend form data to FastAPI backend schema
+            // Map frontend camelCase form → snake_case Supabase API fields
             const payload: any = {
                 statut: isPM ? 'PM' : 'PP',
                 email_principal: data.email || null,
                 telephone: data.telephone || null,
                 adresse_complete: data.adresse || null,
+                ville: data.ville || null,
                 pays: data.pays || "Côte d'Ivoire",
-                ville: data.ville || null
+                statut_facturation: data.statutFacturation || "NON_REGLE",
+                notes: data.notes || null,
             };
 
             if (isPM) {
-                payload.raison_sociale = data.raisonSociale;
-                payload.forme_juridique = data.formeJuridique || 'SA'; // requis backend
-                payload.representant_legal = data.representantLegal || 'Inconnu'; // requis backend
+                payload.raison_sociale = data.raisonSociale || null;
+                payload.forme_juridique = data.formeJuridique || 'SA';
+                payload.representant_legal = data.representantLegal || null;
                 payload.rccm = data.numeroRCCM || null;
                 payload.siege_social = data.siegeSocial || null;
             } else {
@@ -109,14 +118,14 @@ export function ClientFormDialog({
             if (isEdit) {
                 await api.patch(`/api/v1/clients/${client.id}`, payload);
             } else {
-                await api.post("/api/v1/clients/", payload);
+                await api.post('/api/v1/clients', payload);
             }
 
             onSuccess?.()
             onOpenChange(false)
         } catch (error: any) {
             console.error("Error saving client:", error?.response?.data || error)
-            alert("Erreur lors de l'enregistrement du client: " + (error?.response?.data?.detail || error.message))
+            alert("Erreur lors de l'enregistrement du client: " + (error?.response?.data?.error || error.message))
         } finally {
             setLoading(false)
         }
@@ -223,8 +232,27 @@ export function ClientFormDialog({
                                     <Input {...register("pieceIdentite")} placeholder="Numéro CNI ou Passeport" />
                                 </div>
                             </div>
+
+
                         </>
                     )}
+
+                    <div className="space-y-2 border-t border-slate-100 pt-4 mt-4">
+                        <Label>Statut Facturation</Label>
+                        <Select
+                            value={watch("statutFacturation") || "NON_REGLE"}
+                            onValueChange={(value) => setValue("statutFacturation", value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner le statut" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="REGLE">Réglé</SelectItem>
+                                <SelectItem value="PARTIELLEMENT_REGLE">Partiellement réglé</SelectItem>
+                                <SelectItem value="NON_REGLE">Non réglé</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -254,6 +282,15 @@ export function ClientFormDialog({
                             <Label>Pays</Label>
                             <Input {...register("pays")} />
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Notes</Label>
+                        <textarea
+                            {...register("notes")}
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Notes sur le client..."
+                        />
                     </div>
 
                     <DialogFooter>

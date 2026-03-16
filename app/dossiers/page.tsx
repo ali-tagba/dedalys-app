@@ -1,365 +1,369 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { DossierFormDialog } from "@/components/dossiers/dossier-form-dialog"
+import { useEffect, useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-    Search,
-    Plus,
-    FolderOpen,
-    Calendar,
-    Scale,
-    LayoutGrid,
-    Table as TableIcon,
-    AlertCircle,
-    CheckCircle2,
-    Clock
-} from "lucide-react"
-
-const statusConfig = {
-    EN_COURS: { label: "En cours", color: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
-    EN_ATTENTE: { label: "En attente", color: "bg-orange-50 text-orange-700 border-orange-200", icon: AlertCircle },
-    CLOTURE: { label: "Clôturé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
-    TERMINE: { label: "Terminé", color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
-    ARCHIVE: { label: "Archivé", color: "bg-slate-50 text-slate-700 border-slate-200", icon: FolderOpen }
-}
-
-const typeConfig = {
-    CIVIL: { label: "Civil", color: "bg-blue-100 text-blue-800" },
-    PENAL: { label: "Pénal", color: "bg-red-100 text-red-800" },
-    COMMERCIAL: { label: "Commercial", color: "bg-purple-100 text-purple-800" },
-    ADMINISTRATIF: { label: "Administratif", color: "bg-yellow-100 text-yellow-800" },
-    SOCIAL: { label: "Social", color: "bg-green-100 text-green-800" },
-    AUTRE: { label: "Autre", color: "bg-slate-100 text-slate-800" }
-}
-
-type DossierStatus = keyof typeof statusConfig
-type DossierType = keyof typeof typeConfig
 
 export default function DossiersPage() {
+    const router = useRouter()
     const [dossiers, setDossiers] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
-    const [statusFilter, setStatusFilter] = useState<string>("ALL")
-    const [viewMode, setViewMode] = useState<"list" | "gallery">("list")
-    const [dialogOpen, setDialogOpen] = useState(false)
+    const [statusFilter, setStatusFilter] = useState("ALL")
+    const [typeFilter, setTypeFilter] = useState("ALL")
+    const [domaineFilter, setDomaineFilter] = useState("ALL")
+    const [juridictionFilter, setJuridictionFilter] = useState("ALL")
+
+    // Dropdown state for Action menu
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    // Edit Modal state
+    const [editDossierId, setEditDossierId] = useState<string | null>(null)
+    const [editFormData, setEditFormData] = useState({ titre: "", type: "", statut: "", juridiction: "", domaine: "" })
+    const [isSavingEdit, setIsSavingEdit] = useState(false)
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
 
     const fetchDossiers = async () => {
         try {
             setLoading(true)
-            const response = await api.get('/api/v1/dossiers')
-            const dossiersData = response.data.data || []
+            const res = await api.get('/api/v1/dossiers')
+            setDossiers(res.data.data || [])
+        } catch (e) { console.error(e) }
+        finally { setLoading(false) }
+    }
+    useEffect(() => { fetchDossiers() }, [])
 
-            // Map FastAPI format to Frontend format for UI compatibility
-            const mappedDossiers = dossiersData.map((d: any) => ({
-                ...d,
-                statut: d.statut === 'ouvert' ? 'EN_COURS' : d.statut === 'en_instance' ? 'EN_ATTENTE' : d.statut === 'cloture' ? 'CLOTURE' : 'EN_COURS',
-                type: d.type === 'contentieux' ? 'LITIGE' : d.type === 'conseil' ? 'CONSEIL' : 'AUTRE',
-                juridiction: { nom: d.juridiction || "Non spécifié", ville: "" },
-                audiences: [], // Assuming audiences relation isn't fetched directly natively here, you will need to map it if FastAPI includes it later
-                intitule: d.titre || "Dossier sans titre",
-                numero: d.reference || "N/A"
-            }))
-
-            setDossiers(mappedDossiers)
-        } catch (error) {
-            console.error('Error fetching dossiers:', error)
+    const handleSaveEdit = async () => {
+        if (!editDossierId) return
+        setIsSavingEdit(true)
+        try {
+            await api.patch(`/api/v1/dossiers/${editDossierId}`, editFormData)
+            setEditDossierId(null)
+            fetchDossiers()
+        } catch (e: any) {
+            alert("Erreur lors de la modification : " + (e?.response?.data?.error || e.message))
         } finally {
-            setLoading(false)
+            setIsSavingEdit(false)
         }
     }
 
-    useEffect(() => {
-        fetchDossiers()
-    }, [])
-
-    // Filter logic
-    const filteredDossiers = dossiers.filter(dossier => {
-        // Status filter
-        if (statusFilter !== "ALL" && dossier.statut !== statusFilter) return false
-
-        // Search filter
+    const filtered = dossiers.filter(d => {
+        if (statusFilter !== "ALL" && d.statut !== statusFilter) return false
+        if (typeFilter !== "ALL" && d.type !== typeFilter) return false
+        if (domaineFilter !== "ALL" && d.domaine !== domaineFilter) return false
+        if (juridictionFilter !== "ALL" && d.juridiction !== juridictionFilter) return false
         if (searchQuery) {
-            const query = searchQuery.toLowerCase()
-            return (
-                dossier.numero?.toLowerCase().includes(query) ||
-                dossier.juridiction?.toLowerCase().includes(query) ||
-                dossier.description?.toLowerCase().includes(query)
-            )
+            const q = searchQuery.toLowerCase()
+            return d.titre?.toLowerCase().includes(q) || d.reference?.toLowerCase().includes(q) ||
+                d.clients?.nom?.toLowerCase().includes(q) || d.clients?.raison_sociale?.toLowerCase().includes(q)
         }
-
         return true
     })
 
-    // Calculate stats
-    const stats = {
-        total: dossiers.length,
-        enCours: dossiers.filter(d => d.statut === "EN_COURS").length,
-        enAttente: dossiers.filter(d => d.statut === "EN_ATTENTE").length,
-        clotures: dossiers.filter(d => d.statut === "CLOTURE" || d.statut === "TERMINE").length,
+    const clientName = (d: any) => {
+        if (!d.clients) return "—"
+        return d.clients.statut === 'PP' ? `${d.clients.nom || ''} ${d.clients.prenom || ''}`.trim() : (d.clients.raison_sociale || "—")
+    }
+    const typeColor = (t: string) => ({ contentieux: 'bg-blue-50 text-blue-700 border-blue-100', conseil: 'bg-amber-50 text-amber-700 border-amber-100', penal: 'bg-red-50 text-red-700 border-red-100', transactionnel: 'bg-purple-50 text-purple-700 border-purple-100' }[t as string] || 'bg-slate-100 text-slate-700 border-slate-200')
+    const typeLabel = (t: string) => ({ contentieux: 'Contentieux', conseil: 'Conseil', penal: 'Pénal', transactionnel: 'Transactionnel', autre: 'Autre' }[t as string] || t || '—')
+    const statutColor = (s: string) => ({ en_cours: 'color:#059669', ouvert: 'color:#059669', en_instance: 'color:#64748b', en_attente: 'color:#64748b', cloture: 'color:#94A3B8', urgent: 'color:#dc2626', suspendu: 'color:#64748b' }[s as string] || 'color:#64748b')
+    const statutLabel = (s: string) => ({ en_cours: 'En cours', ouvert: 'En cours', en_instance: 'En attente', en_attente: 'En attente', cloture: 'Clôturé', suspendu: 'Suspendu', urgent: 'Urgent' }[s as string] || s || '—')
+
+    const getNextAudience = (d: any) => {
+        if (d.prochaine_audience) return d.prochaine_audience;
+        if (!d.audiences || d.audiences.length === 0) return null;
+
+        const valid = d.audiences.filter((a: any) => a.date);
+        if (valid.length === 0) return null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const future = valid.filter((a: any) => new Date(a.date) >= today)
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        return future.length > 0 ? future[0].date : null;
     }
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-200 border-t-blue-600"></div>
-            </div>
-        )
-    }
+    if (loading) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#F8F9FA' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #E2E8F0', borderTop: '3px solid #2563EB', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+    )
 
     return (
-        <div className="flex flex-col h-full p-[var(--container-padding)] gap-[var(--spacing-6)]">
-            {/* Header & Stats - Fixed at top */}
-            <div className="flex-none flex flex-col gap-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                            Gestion des Dossiers
-                        </h1>
-                        <p className="text-slate-500 mt-1">
-                            {filteredDossiers.length} dossier(s) trouvé(s)
-                        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#F8F9FA' }}>
+
+            {/* ── HEADER ── */}
+            <div style={{ height: 64, flexShrink: 0, background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', zIndex: 10 }}>
+                <div style={{ flex: 1, maxWidth: 520 }}>
+                    <div style={{ position: 'relative' }}>
+                        <span className="material-symbols-outlined" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', fontSize: 18, pointerEvents: 'none' }}>search</span>
+                        <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Rechercher un dossier, client, référence..."
+                            style={{ width: '100%', paddingLeft: 36, paddingRight: 12, paddingTop: 7, paddingBottom: 7, border: '1px solid #E2E8F0', borderRadius: 3, fontSize: 13, background: '#F8F9FA', outline: 'none', fontFamily: 'inherit' }} />
                     </div>
-                    <Button
-                        size="lg"
-                        className="shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => setDialogOpen(true)}
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 20 }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', position: 'relative', display: 'flex' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>notifications</span>
+                        <span style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, background: '#F59E0B', borderRadius: '50%', border: '2px solid #fff' }} />
+                    </button>
+                    <div style={{ width: 1, height: 22, background: '#E2E8F0' }} />
+                    <button onClick={() => router.push('/dossiers/nouveau')}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 3, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 17 }}>add</span>
                         Nouveau Dossier
-                    </Button>
+                    </button>
                 </div>
+            </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* ── TITLE + FILTERS ── */}
+            <div style={{ flexShrink: 0, background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '16px 24px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                    <h2 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 21, fontWeight: 700, color: '#0F172A', margin: 0 }}>Index des Dossiers</h2>
+                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#94A3B8' }}>{dossiers.length} ENREGISTREMENTS</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, paddingBottom: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
                     {[
-                        { label: "Total", value: stats.total, color: "bg-slate-50 text-slate-700" },
-                        { label: "En cours", value: stats.enCours, color: "bg-blue-50 text-blue-700" },
-                        { label: "En attente", value: stats.enAttente, color: "bg-orange-50 text-orange-700" },
-                        { label: "Clôturés", value: stats.clotures, color: "bg-green-50 text-green-700" }
-                    ].map((stat, idx) => (
-                        <Card key={idx} className={`p-4 ${stat.color} border-none shadow-sm`}>
-                            <div className="text-sm font-medium opacity-80">{stat.label}</div>
-                            <div className="text-2xl font-bold mt-1">{stat.value}</div>
-                        </Card>
+                        { label: 'Juridiction', value: juridictionFilter, set: setJuridictionFilter, opts: [...new Set(dossiers.map(d => d.juridiction).filter(Boolean))] },
+                        { label: 'Domaine', value: domaineFilter, set: setDomaineFilter, opts: [...new Set(dossiers.map(d => d.domaine).filter(Boolean))] },
+                        { label: 'Statut', value: statusFilter, set: setStatusFilter, opts: ['en_cours', 'ouvert', 'en_instance', 'cloture', 'urgent', 'suspendu'] },
+                        { label: "Type d'affaire", value: typeFilter, set: setTypeFilter, opts: ['contentieux', 'conseil', 'penal', 'transactionnel', 'autre'] },
+                    ].map((f, i) => (
+                        <span key={f.label} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                            {i > 0 && <span style={{ display: 'inline-block', width: 1, height: 14, background: '#E2E8F0', margin: '0 6px' }} />}
+                            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                                <select value={f.value} onChange={e => f.set(e.target.value)}
+                                    style={{ appearance: 'none', background: 'none', border: 'none', padding: '7px 22px 7px 8px', fontSize: 13, fontWeight: 500, color: '#334155', cursor: 'pointer', outline: 'none', fontFamily: 'inherit' }}>
+                                    <option value="ALL">{f.label}</option>
+                                    {f.opts.map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                                <span className="material-symbols-outlined" style={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', fontSize: 15, color: '#94A3B8', pointerEvents: 'none' }}>expand_more</span>
+                            </span>
+                        </span>
                     ))}
+                    <span style={{ flex: 1 }} />
+                    <button onClick={fetchDossiers} title="Actualiser" style={{ display: 'flex', padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', borderRadius: 3 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 19 }}>refresh</span>
+                    </button>
+                    <button title="Exporter" style={{ display: 'flex', padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', borderRadius: 3 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 19 }}>download</span>
+                    </button>
                 </div>
+            </div>
 
-                {/* Filters & Search */}
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white p-1 rounded-lg">
-                    <div className="relative w-full lg:max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder="Rechercher par intitulé, numéro, juridiction..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 h-10 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500 transition-all shadow-sm"
-                        />
-                    </div>
+            {/* ── SCROLL ZONE ── */}
+            <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+                <div
+                    style={{ position: 'absolute', inset: 0, overflow: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 #F1F5F9' }}
+                    className="dossier-scroll"
+                >
+                    <style>{`
+                        .dossier-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+                        .dossier-scroll::-webkit-scrollbar-track { background: #F1F5F9; }
+                        .dossier-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+                        .dossier-scroll::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+                        .dossier-scroll::-webkit-scrollbar-corner { background: #F1F5F9; }
+                        .dos-row:hover { background: #F8F9FA !important; }
+                        .dos-btn:hover { opacity: 1 !important; }
+                        .action-menu-item:hover { background: #F1F5F9; color: #2563EB; }
+                        .action-menu-delete:hover { background: #FEF2F2; color: #EF4444; }
+                    `}</style>
 
-                    <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
-                        {/* Status Filter */}
-                        <div className="flex gap-2">
-                            {(["ALL", "EN_COURS", "EN_ATTENTE", "CLOTURE"] as const).map((status) => (
-                                <Button
-                                    key={status}
-                                    variant={statusFilter === status ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setStatusFilter(status)}
-                                    className="whitespace-nowrap rounded-lg"
-                                >
-                                    {status === "ALL" ? "Tous" : statusConfig[status as DossierStatus].label}
-                                </Button>
+                    <table style={{ width: '100%', minWidth: 1400, borderCollapse: 'collapse', background: '#fff', fontSize: 13 }}>
+                        <thead>
+                            <tr style={{ background: '#F8F9FA', position: 'sticky', top: 0, zIndex: 4 }}>
+                                {/* Increased left padding on the first column to prevent sidebar overlap */}
+                                {[
+                                    { label: 'ID Dossier', w: 140, padLeft: 24 },
+                                    { label: 'Client', w: 180 },
+                                    { label: 'Nom du dossier', w: 220 },
+                                    { label: 'Type', w: 130 },
+                                    { label: 'Domaine', w: 160 },
+                                    { label: 'Avocats', w: 90 },
+                                    { label: 'Juridiction', w: 170 },
+                                    { label: 'Audience', w: 130 },
+                                    { label: 'Statut', w: 100 },
+                                    { label: 'Actions', w: 90, right: true },
+                                ].map(col => (
+                                    <th key={col.label}
+                                        style={{ width: col.w, minWidth: col.w, padding: `8px 12px`, paddingLeft: col.padLeft || 12, borderBottom: '1px solid #E2E8F0', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94A3B8', textAlign: col.right ? 'right' : 'left', whiteSpace: 'nowrap', userSelect: 'none' }}>
+                                        {col.label}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map(d => (
+                                <tr key={d.id} className="dos-row" onClick={() => router.push(`/dossiers/${d.id}`)}
+                                    style={{ borderBottom: '1px solid #F1F5F9', height: 44, cursor: 'pointer', background: '#fff', transition: 'background 0.1s' }}>
+                                    <td style={{ padding: '0 12px 0 24px', whiteSpace: 'nowrap' }}>
+                                        <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#0F172A' }}>{d.reference || 'DOS-000'}</span>
+                                    </td>
+                                    <td style={{ padding: '0 12px', maxWidth: 180 }}>
+                                        <span style={{ fontSize: 13, fontWeight: 500, color: '#1E293B', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName(d)}</span>
+                                    </td>
+                                    <td style={{ padding: '0 12px', maxWidth: 220 }}>
+                                        <span title={d.titre} style={{ fontSize: 13, color: '#334155', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.titre || 'Sans titre'}</span>
+                                    </td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 2, fontSize: 10, fontWeight: 600, border: '1px solid' }} className={typeColor(d.type)}>{typeLabel(d.type)}</span>
+                                    </td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap', color: '#475569', fontSize: 13 }}>{d.domaine || '—'}</td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
+                                        <div style={{ display: 'flex', marginLeft: 0 }}>
+                                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#E2E8F0', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#475569' }}>JD</div>
+                                            {d.type === 'contentieux' && <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#CBD5E1', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#334155', marginLeft: -8 }}>MK</div>}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap', color: '#475569', fontSize: 13 }}>{d.juridiction || '—'}</td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
+                                        {getNextAudience(d) ? (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#92400E', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 2, padding: '2px 7px' }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 13 }}>gavel</span>
+                                                {new Date(getNextAudience(d)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                                            </span>
+                                        ) : <span style={{ color: '#CBD5E1', fontSize: 12 }}>—</span>}
+                                    </td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
+                                        <span style={{ fontSize: 12, fontWeight: 600, ...Object.fromEntries(statutColor(d.statut).split(';').map(s => s.trim().split(':'))) }}>{statutLabel(d.statut)}</span>
+                                    </td>
+                                    <td style={{ padding: '0 12px', whiteSpace: 'nowrap', textAlign: 'right', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === d.id ? null : d.id) }}
+                                            style={{ width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, border: '1px solid transparent', background: openMenuId === d.id ? '#F1F5F9' : 'transparent', cursor: 'pointer', color: '#64748B', transition: 'all 0.15s' }}
+                                            className="hover:bg-slate-100 hover:border-slate-200"
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>more_horiz</span>
+                                        </button>
+
+                                        {openMenuId === d.id && (
+                                            <div ref={menuRef} style={{ position: 'absolute', right: 30, top: 35, width: 180, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 50, padding: 4, textAlign: 'left' }}>
+                                                <button onClick={() => router.push(`/dossiers/${d.id}`)} className="action-menu-item" style={{ width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#334155', borderRadius: 4, transition: 'background 0.1s' }}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
+                                                    Entrez dans le dossier
+                                                </button>
+                                                <button onClick={() => {
+                                                    setOpenMenuId(null)
+                                                    setEditFormData({
+                                                        titre: d.titre || "",
+                                                        type: d.type || "conseil",
+                                                        statut: d.statut || "en_cours",
+                                                        juridiction: d.juridiction || "",
+                                                        domaine: d.domaine || ""
+                                                    })
+                                                    setEditDossierId(d.id)
+                                                }} className="action-menu-item" style={{ width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#334155', borderRadius: 4, transition: 'background 0.1s' }}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                                                    Modifier
+                                                </button>
+                                                <div style={{ height: 1, background: '#F1F5F9', margin: '4px 0' }} />
+                                                <button onClick={() => { if (confirm('Supprimer ce dossier définitivement ?')) api.delete(`/api/v1/dossiers/${d.id}`).then(fetchDossiers) }} className="action-menu-delete" style={{ width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, color: '#EF4444', borderRadius: 4, transition: 'background 0.1s' }}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                                                    Supprimer
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
                             ))}
-                        </div>
+                            {filtered.length === 0 && (
+                                <tr><td colSpan={10} style={{ padding: '48px 12px', textAlign: 'center', fontSize: 13, color: '#94A3B8', fontStyle: 'italic' }}>Aucun dossier correspondant à vos critères.</td></tr>
+                            )}
+                            <tr style={{ height: 40 }}><td colSpan={10} /></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                        {/* View Toggle */}
-                        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "gallery")} className="hidden lg:block ml-2">
-                            <TabsList className="bg-slate-100">
-                                <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                                    <TableIcon className="h-4 w-4" />
-                                </TabsTrigger>
-                                <TabsTrigger value="gallery" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                                    <LayoutGrid className="h-4 w-4" />
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
+            {/* ── FOOTER PAGINATION ── */}
+            <div style={{ height: 48, flexShrink: 0, borderTop: '1px solid #E2E8F0', background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+                <span style={{ fontSize: 12, color: '#94A3B8' }}>
+                    Affichage <strong style={{ color: '#1E293B' }}>1–{filtered.length}</strong> de <strong style={{ color: '#1E293B' }}>{dossiers.length}</strong>
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94A3B8' }}>
+                        Lignes par page:
+                        <select style={{ border: 'none', fontSize: 12, fontWeight: 600, color: '#1E293B', background: 'none', outline: 'none', cursor: 'pointer' }}>
+                            <option>50</option><option>100</option><option>200</option>
+                        </select>
+                    </label>
+                    <div style={{ display: 'flex', gap: 14 }}>
+                        <button disabled style={{ fontSize: 12, fontWeight: 600, color: '#CBD5E1', background: 'none', border: 'none', cursor: 'not-allowed' }}>Précédent</button>
+                        <button style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer' }}>Suivant</button>
                     </div>
                 </div>
             </div>
 
-            {/* Content Area - Flex-1 for scroll */}
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                {filteredDossiers.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 m-1">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                            <Search className="h-8 w-8 text-slate-400" />
+            {/* ── MODAL DE MODIFICATION ── */}
+            {editDossierId && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+                    <div style={{ background: '#fff', width: '100%', maxWidth: 500, borderRadius: 8, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0F172A', margin: 0 }}>Modifier le dossier</h3>
+                            <button onClick={() => setEditDossierId(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', display: 'flex' }}><span className="material-symbols-outlined" style={{ fontSize: 20 }}>close</span></button>
                         </div>
-                        <h3 className="text-lg font-medium text-slate-900">Aucun dossier trouvé</h3>
-                        <p className="text-slate-500 mt-1">Modifiez vos filtres de recherche</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* TABLE VIEW (Desktop) */}
-                        {viewMode === "list" && (
-                            <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                                <div className="overflow-auto flex-1 custom-scrollbar">
-                                    <Table className="min-w-[1000px]">
-                                        <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-sm">
-                                            <TableRow className="hover:bg-transparent border-b-slate-200">
-                                                <TableHead className="w-[300px] pl-6 font-semibold text-slate-600">Dossier</TableHead>
-                                                <TableHead className="font-semibold text-slate-600">Type</TableHead>
-                                                <TableHead className="font-semibold text-slate-600">Statut</TableHead>
-                                                <TableHead className="font-semibold text-slate-600">Juridiction</TableHead>
-                                                <TableHead className="font-semibold text-slate-600">Prochaine audience</TableHead>
-                                                <TableHead className="text-right pr-6 font-semibold text-slate-600">Actions</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredDossiers.map((dossier) => {
-                                                const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
-                                                const StatusIcon = statusConfig[statusKey].icon
-                                                const nextAudience = dossier.audiences
-                                                    .filter((a: any) => a.statut === "PLANIFIEE")
-                                                    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
-
-                                                return (
-                                                    <TableRow key={dossier.id} className="group hover:bg-blue-50/30 border-b-slate-100 transition-colors">
-                                                        <TableCell className="font-medium pl-6 py-3">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center ring-1 ring-blue-100 group-hover:bg-blue-100 transition-colors">
-                                                                    <FolderOpen className="h-5 w-5" />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">{dossier.intitule}</div>
-                                                                    <div className="text-xs text-slate-500 font-mono">{dossier.numero}</div>
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="secondary" className={`${typeConfig[(dossier.type || 'AUTRE') as DossierType].color} border-transparent font-normal`}>
-                                                                {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1.5 w-fit pl-1.5 pr-2.5 py-0.5 border-transparent`}>
-                                                                <StatusIcon className="h-3.5 w-3.5" />
-                                                                <span className="font-medium">{statusConfig[statusKey].label}</span>
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-700">{dossier.juridiction.nom}</span>
-                                                                <span className="text-xs text-slate-400">{dossier.juridiction.ville}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {nextAudience ? (
-                                                                <div className="flex items-center gap-2 text-sm bg-slate-50 w-fit px-2 py-1 rounded-md border border-slate-100">
-                                                                    <Calendar className="h-4 w-4 text-blue-500" />
-                                                                    <span className="font-medium text-slate-700">{new Date(nextAudience.date).toLocaleDateString('fr-FR')}</span>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-xs text-slate-400 italic pl-2">Aucune</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-right pr-6">
-                                                            <Link href={`/dossiers/${dossier.id}`}>
-                                                                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 font-medium">
-                                                                    Ouvrir
-                                                                </Button>
-                                                            </Link>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
+                        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Titre du dossier</label>
+                                <input type="text" value={editFormData.titre} onChange={e => setEditFormData({ ...editFormData, titre: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, outline: 'none', color: '#0F172A' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Type</label>
+                                    <select value={editFormData.type} onChange={e => setEditFormData({ ...editFormData, type: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, outline: 'none', color: '#0F172A', background: '#fff' }}>
+                                        <option value="contentieux">Contentieux</option>
+                                        <option value="conseil">Conseil</option>
+                                        <option value="penal">Pénal</option>
+                                        <option value="transactionnel">Transactionnel</option>
+                                        <option value="autre">Autre</option>
+                                    </select>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Statut</label>
+                                    <select value={editFormData.statut} onChange={e => setEditFormData({ ...editFormData, statut: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, outline: 'none', color: '#0F172A', background: '#fff' }}>
+                                        <option value="en_cours">En cours</option>
+                                        <option value="en_instance">En attente</option>
+                                        <option value="cloture">Clôturé</option>
+                                        <option value="suspendu">Suspendu</option>
+                                    </select>
                                 </div>
                             </div>
-                        )}
-
-                        {/* GALLERY VIEW (Scrollable) */}
-                        {viewMode === "gallery" && (
-                            <div className="overflow-y-auto flex-1 custom-scrollbar pr-2">
-                                {filteredDossiers.map((dossier) => {
-                                    const statusKey = (statusConfig[dossier.statut as DossierStatus] ? dossier.statut : (dossier.statut === 'CLOSTURE' ? 'CLOTURE' : 'EN_COURS')) as DossierStatus
-                                    const StatusIcon = statusConfig[statusKey].icon
-                                    const nextAudience = dossier.audiences
-                                        .filter((a: any) => a.statut === "PLANIFIEE")
-                                        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
-
-                                    return (
-                                        <Card key={dossier.id} className="p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex flex-col">
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                    <Scale className="h-6 w-6" />
-                                                </div>
-                                                <Badge variant="outline" className={`${statusConfig[statusKey].color} flex items-center gap-1`}>
-                                                    <StatusIcon className="h-3 w-3" />
-                                                    {statusConfig[statusKey].label}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-lg text-slate-900 mb-1">{dossier.intitule}</h3>
-                                                <p className="text-xs text-slate-500 mb-3">{dossier.numero}</p>
-
-                                                <div className="space-y-2 text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="secondary" className={`${typeConfig[(dossier.type || 'AUTRE') as DossierType].color} text-xs`}>
-                                                            {typeConfig[(dossier.type || 'AUTRE') as DossierType].label}
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="text-slate-600">
-                                                        <div className="font-medium">{dossier.juridiction.nom}</div>
-                                                        <div className="text-xs text-slate-400">{dossier.juridiction.ville}</div>
-                                                    </div>
-                                                    {nextAudience && (
-                                                        <div className="flex items-center gap-2 text-slate-600 pt-2 border-t border-slate-100">
-                                                            <Calendar className="h-4 w-4 text-blue-500" />
-                                                            <span className="text-xs">Audience: {new Date(nextAudience.date).toLocaleDateString('fr-FR')}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-6 pt-4 border-t border-slate-50">
-                                                <Link href={`/dossiers/${dossier.id}`} className="block">
-                                                    <Button className="w-full bg-slate-900 text-white hover:bg-blue-600 transition-colors shadow-none hover:shadow-lg">
-                                                        Voir dossier
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </Card>
-                                    )
-                                })}
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Domaine du droit</label>
+                                    <input type="text" value={editFormData.domaine} onChange={e => setEditFormData({ ...editFormData, domaine: e.target.value })} placeholder="ex: Droit commercial" style={{ width: '100%', padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, outline: 'none', color: '#0F172A' }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Juridiction</label>
+                                    <input type="text" value={editFormData.juridiction} onChange={e => setEditFormData({ ...editFormData, juridiction: e.target.value })} placeholder="ex: TPI Abidjan" style={{ width: '100%', padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, outline: 'none', color: '#0F172A' }} />
+                                </div>
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
-
-            {/* Dossier Form Dialog */}
-            <DossierFormDialog
-                open={dialogOpen}
-                onOpenChange={setDialogOpen}
-                onSuccess={fetchDossiers}
-            />
+                        </div>
+                        <div style={{ padding: '16px 24px', background: '#F8F9FA', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button onClick={() => setEditDossierId(null)} style={{ padding: '8px 16px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13, fontWeight: 500, color: '#475569', cursor: 'pointer' }}>Annuler</button>
+                            <button onClick={handleSaveEdit} disabled={isSavingEdit} style={{ padding: '8px 16px', background: '#2563EB', border: 'none', borderRadius: 4, fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: isSavingEdit ? 0.7 : 1 }}>
+                                {isSavingEdit && <span className="material-symbols-outlined" style={{ fontSize: 16, animation: 'spin 1s linear infinite' }}>progress_activity</span>}
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
+

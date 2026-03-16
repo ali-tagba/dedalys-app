@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select"
 import { api } from "@/lib/api"
 
-// Liste des juridictions de Côte d'Ivoire
 const JURIDICTIONS = [
     "Tribunal de première instance d'Abidjan Plateau",
     "Tribunal de première instance de Yopougon",
@@ -37,19 +36,18 @@ const JURIDICTIONS = [
     "Cour suprême"
 ]
 
-// Removed static AVOCATS array, will fetch dynamically
-
 const audienceSchema = z.object({
-    titre: z.string().min(1, "Titre requis"),
-    date: z.string().min(1, "Date requise"),
+    titre: z.string().optional(),
+    date: z.string().optional(),
     heure: z.string().optional(),
     duree: z.string().optional(),
-    juridiction: z.string().min(1, "Juridiction requise"),
+    juridiction: z.string().optional(),
     salleAudience: z.string().optional(),
-    clientId: z.string().min(1, "Client requis"),
-    dossierId: z.string().min(1, "Dossier requis"),
+    clientId: z.string().optional(),
+    dossierId: z.string().optional(),
     avocat: z.string().optional(),
     statut: z.string().optional(),
+    resultat: z.string().optional(),
     notes: z.string().optional(),
 })
 
@@ -60,6 +58,15 @@ interface AudienceFormDialogProps {
     onOpenChange: (open: boolean) => void
     onSuccess?: () => void
     audience?: any
+    prefillDossierId?: string
+    prefillClientId?: string
+}
+
+function getClientLabel(c: any) {
+    if (!c) return "—"
+    if (c.statut === "PP" || c.type === "PERSONNE_PHYSIQUE")
+        return `${c.nom || ""} ${c.prenom || ""}`.trim()
+    return c.raison_sociale || c.raisonSociale || "—"
 }
 
 export function AudienceFormDialog({
@@ -67,6 +74,8 @@ export function AudienceFormDialog({
     onOpenChange,
     onSuccess,
     audience,
+    prefillDossierId,
+    prefillClientId,
 }: AudienceFormDialogProps) {
     const [loading, setLoading] = useState(false)
     const [clients, setClients] = useState<any[]>([])
@@ -79,76 +88,125 @@ export function AudienceFormDialog({
         handleSubmit,
         watch,
         setValue,
+        reset,
         formState: { errors },
     } = useForm<AudienceFormData>({
         resolver: zodResolver(audienceSchema),
-        defaultValues: audience ? {
-            ...audience,
-            avocat: audience.avocat_assigne_id,
-            clientId: audience.client_id,
-            dossierId: audience.dossier_id,
-        } : {
+        defaultValues: {
             statut: "A_VENIR",
+            resultat: "",
+            titre: "",
+            date: "",
+            heure: "09:00",
+            duree: "",
+            juridiction: "",
+            salleAudience: "",
+            clientId: "",
+            dossierId: "",
+            avocat: "",
+            notes: "",
         },
     })
 
     const selectedDossierId = watch("dossierId")
+    const selectedClientId = watch("clientId")
 
     useEffect(() => {
         if (open) {
-            // Fetch clients, dossiers and avocats
             Promise.all([
-                api.get('/api/v1/clients').then(res => res.data.data || res.data || []),
-                api.get('/api/v1/dossiers').then(res => res.data.data || res.data || []),
-                api.get('/api/v1/utilisateurs').then(res => res.data || [])
+                api.get("/api/v1/clients").then((r) => r.data?.data ?? r.data ?? []),
+                api.get("/api/v1/dossiers").then((r) => r.data?.data ?? r.data ?? []),
+                api.get("/api/v1/utilisateurs").then((r) => r.data ?? []),
             ])
                 .then(([clientsData, dossiersData, avocatsData]) => {
-                    setClients(clientsData)
-                    setDossiers(dossiersData)
-                    setAvocats(avocatsData)
+                    setClients(Array.isArray(clientsData) ? clientsData : [])
+                    setDossiers(Array.isArray(dossiersData) ? dossiersData : [])
+                    setAvocats(Array.isArray(avocatsData) ? avocatsData : [])
                 })
-                .catch(err => console.error('Error fetching data:', err))
+                .catch((err) => console.error("Error fetching data:", err))
         }
     }, [open])
 
-    // Auto-select client when dossier is selected
+    useEffect(() => {
+        if (audience) {
+            reset({
+                titre: audience.titre ?? "",
+                date: audience.date?.slice?.(0, 10) ?? "",
+                heure: audience.heure?.slice?.(0, 5) ?? "09:00",
+                duree: audience.duree ?? "",
+                juridiction: audience.juridiction ?? "",
+                salleAudience: audience.salle_audience ?? audience.salleAudience ?? "",
+                clientId: audience.client_id ?? audience.clientId ?? "",
+                dossierId: audience.dossier_id ?? audience.dossierId ?? "",
+                avocat: audience.avocat_assigne_id ?? audience.avocat ?? "",
+                statut: audience.statut ?? "A_VENIR",
+                resultat: audience.resultat ?? "",
+                notes: audience.notes ?? "",
+            })
+        } else if (open && (prefillDossierId || prefillClientId)) {
+            if (prefillDossierId) setValue("dossierId", prefillDossierId)
+            if (prefillClientId) setValue("clientId", prefillClientId)
+        }
+    }, [audience, open, prefillDossierId, prefillClientId, reset, setValue])
+
     useEffect(() => {
         if (selectedDossierId) {
-            const selectedDossier = dossiers.find(d => d.id === selectedDossierId)
-            if (selectedDossier) {
-                setValue("clientId", selectedDossier.client_id || selectedDossier.clientId)
+            const d = dossiers.find((x) => x.id === selectedDossierId)
+            if (d) {
+                const cid = d.client_id ?? d.clientId
+                if (cid) setValue("clientId", cid)
             }
         }
     }, [selectedDossierId, dossiers, setValue])
 
     const onSubmit = async (data: AudienceFormData) => {
+        if (!data.date) {
+            alert("La date est requise pour créer une audience.")
+            return
+        }
+        if (!data.dossierId) {
+            alert("Veuillez sélectionner un dossier pour lier l'audience.")
+            return
+        }
+
         setLoading(true)
         try {
             const payload: any = {
-                titre: data.titre,
                 date: data.date,
-                heure: data.heure || "08:00", // Fix missing time which causes 422
-                duree: data.duree || null,
-                juridiction: data.juridiction,
-                salle_audience: data.salleAudience || null,
+                heure: data.heure || "09:00",
+                juridiction: data.juridiction || null,
                 dossier_id: data.dossierId,
-                avocat_assigne_id: data.avocat || (avocats.length > 0 ? avocats[0].id : null), // Fallback if missed
-                type: 'audience',
+                avocat_assigne_id: data.avocat || (avocats[0]?.id ?? null),
                 statut: data.statut || "A_VENIR",
-                notes: data.notes || null
+                resultat: data.statut === "TERMINEE" ? (data.resultat || null) : null,
+                type: "audience",
+                notes: data.notes || null,
+                titre: data.titre || null,
+                salle_audience: data.salleAudience || null,
+                duree: data.duree || null,
             }
 
             if (isEdit) {
                 await api.patch(`/api/v1/audiences/${audience.id}`, payload)
             } else {
-                await api.post("/api/v1/audiences/", payload)
+                const res = await api.post("/api/v1/audiences", payload)
+                const created = res.data?.data ?? res.data
+                if (created?.id && data.dossierId && data.titre) {
+                    try {
+                        await api.patch(`/api/v1/dossiers/${data.dossierId}`, {
+                            prochaine_audience: data.date,
+                        })
+                    } catch (_) {
+                        /* non bloquant */
+                    }
+                }
             }
 
             onSuccess?.()
             onOpenChange(false)
         } catch (error: any) {
-            console.error("Error saving audience:", error?.response?.data || error)
-            alert("Erreur lors de l'enregistrement de l'audience: " + (error?.response?.data?.detail || error.message))
+            const msg = error?.response?.data?.error || error?.message || "Erreur inconnue"
+            alert("Erreur lors de l'enregistrement : " + msg)
         } finally {
             setLoading(false)
         }
@@ -165,80 +223,92 @@ export function AudienceFormDialog({
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Titre *</Label>
+                        <Label>Titre de l'audience</Label>
                         <Input {...register("titre")} placeholder="Ex: Plaidoirie sur le fond" />
-                        {errors.titre && (
-                            <p className="text-sm text-red-600">{errors.titre.message}</p>
-                        )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Dossier *</Label>
-                        <Select
-                            value={watch("dossierId")}
-                            onValueChange={(value) => setValue("dossierId", value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un dossier" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {dossiers.map((dossier) => (
-                                    <SelectItem key={dossier.id} value={dossier.id}>
-                                        {dossier.reference || dossier.numero} - {clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.type === "PERSONNE_PHYSIQUE"
-                                            ? `${clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.nom} ${clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.prenom}`
-                                            : clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.raison_sociale || clients.find(c => c.id === (dossier.client_id || dossier.clientId))?.raisonSociale}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {errors.dossierId && (
-                            <p className="text-sm text-red-600">{errors.dossierId.message}</p>
-                        )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Dossier (depuis l'index)</Label>
+                            <Select
+                                value={watch("dossierId") || "none"}
+                                onValueChange={(v) => setValue("dossierId", v === "none" ? "" : v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner un dossier" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">— Aucun —</SelectItem>
+                                    {dossiers.map((d) => {
+                                        const c = clients.find((x) => x.id === (d.client_id ?? d.clientId))
+                                        return (
+                                            <SelectItem key={d.id} value={d.id}>
+                                                {d.reference || d.numero || d.id?.slice(0, 8)} — {getClientLabel(c)}
+                                            </SelectItem>
+                                        )
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Client</Label>
+                            <Select
+                                value={watch("clientId") || "none"}
+                                onValueChange={(v) => setValue("clientId", v === "none" ? "" : v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner un client" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">— Aucun —</SelectItem>
+                                    {clients.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>
+                                            {getClientLabel(c)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <Label>Date *</Label>
+                            <Label>Date</Label>
                             <Input type="date" {...register("date")} />
-                            {errors.date && (
-                                <p className="text-sm text-red-600">{errors.date.message}</p>
-                            )}
                         </div>
                         <div className="space-y-2">
                             <Label>Heure</Label>
-                            <Input type="time" {...register("heure")} placeholder="Ex: 14:30" />
+                            <Input type="time" {...register("heure")} placeholder="09:00" />
                         </div>
                         <div className="space-y-2">
                             <Label>Durée estimée</Label>
-                            <Input {...register("duree")} placeholder="Ex: 2h" />
+                            <Input {...register("duree")} placeholder="Ex: 1h 30m" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Juridiction *</Label>
+                            <Label>Juridiction</Label>
                             <Select
-                                value={watch("juridiction") || ""}
-                                onValueChange={(value) => setValue("juridiction", value)}
+                                value={watch("juridiction") || "none"}
+                                onValueChange={(v) => setValue("juridiction", v === "none" ? "" : v)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionner" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {JURIDICTIONS.map((juridiction) => (
-                                        <SelectItem key={juridiction} value={juridiction}>
-                                            {juridiction}
+                                    <SelectItem value="none">— Aucune —</SelectItem>
+                                    {JURIDICTIONS.map((j) => (
+                                        <SelectItem key={j} value={j}>
+                                            {j}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.juridiction && (
-                                <p className="text-sm text-red-600">{errors.juridiction.message}</p>
-                            )}
                         </div>
                         <div className="space-y-2">
                             <Label>Salle d'audience</Label>
-                            <Input {...register("salleAudience")} placeholder="Ex: Salle 3" />
+                            <Input {...register("salleAudience")} placeholder="Ex: Salle 4B" />
                         </div>
                     </div>
 
@@ -246,16 +316,17 @@ export function AudienceFormDialog({
                         <div className="space-y-2">
                             <Label>Avocat assigné</Label>
                             <Select
-                                value={watch("avocat") || ""}
-                                onValueChange={(value) => setValue("avocat", value)}
+                                value={watch("avocat") || "none"}
+                                onValueChange={(v) => setValue("avocat", v === "none" ? "" : v)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un avocat" />
+                                    <SelectValue placeholder="Sélectionner" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {avocats.map((avocat) => (
-                                        <SelectItem key={avocat.id} value={avocat.id}>
-                                            {avocat.prenom} {avocat.nom}
+                                    <SelectItem value="none">— Aucun —</SelectItem>
+                                    {avocats.map((a) => (
+                                        <SelectItem key={a.id} value={a.id}>
+                                            {a.prenom} {a.nom}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -264,8 +335,8 @@ export function AudienceFormDialog({
                         <div className="space-y-2">
                             <Label>Statut</Label>
                             <Select
-                                value={watch("statut")}
-                                onValueChange={(value) => setValue("statut", value)}
+                                value={watch("statut") ?? "A_VENIR"}
+                                onValueChange={(v) => setValue("statut", v)}
                             >
                                 <SelectTrigger>
                                     <SelectValue />
@@ -278,6 +349,25 @@ export function AudienceFormDialog({
                                 </SelectContent>
                             </Select>
                         </div>
+                        {watch("statut") === "TERMINEE" && (
+                            <div className="space-y-2">
+                                <Label>Résultat</Label>
+                                <Select
+                                    value={watch("resultat") ?? ""}
+                                    onValueChange={(v) => setValue("resultat", v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionner..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">—</SelectItem>
+                                        <SelectItem value="GAGNE">Gagné</SelectItem>
+                                        <SelectItem value="PERDU">Perdu</SelectItem>
+                                        <SelectItem value="MIXTE">Mixte / Partiel</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-2">
@@ -286,11 +376,7 @@ export function AudienceFormDialog({
                     </div>
 
                     <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                        >
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Annuler
                         </Button>
                         <Button type="submit" disabled={loading}>

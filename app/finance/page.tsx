@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { FinanceKPI } from "@/components/finance/finance-kpi"
 import { RevenueChart } from "@/components/finance/revenue-chart"
-import { TransactionTable } from "@/components/finance/transaction-table"
+import { InvoiceTable as TransactionTable } from "@/components/finance/transaction-table"
 import { Separator } from "@/components/ui/separator"
 import { DollarSign, TrendingUp, CreditCard, Wallet, Activity, ArrowUpRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
