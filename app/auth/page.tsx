@@ -17,7 +17,7 @@ export default function AuthPage() {
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
 
-    const { signIn, resetPassword, user, loading: authLoading } = useAuth()
+    const { signIn, signOut, resetPassword, user, loading: authLoading } = useAuth()
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -33,14 +33,14 @@ export default function AuthPage() {
         e.preventDefault()
         setError("")
         setLoading(true)
-        const { error } = await signIn(email, password)
+        const { error } = await signIn(email, password, false)
         if (error) {
             if (error.message === "Invalid login credentials") {
                 setError("Email ou mot de passe incorrect.")
             } else if (error.message === "Email not confirmed") {
                 setError("Veuillez confirmer votre adresse email avant de vous connecter.")
             } else {
-                setError("Une erreur est survenue. Veuillez réessayer.")
+                setError(error.message || "Une erreur est survenue. Veuillez réessayer.")
             }
             setLoading(false)
         } else {

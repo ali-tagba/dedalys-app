@@ -11,18 +11,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter()
     const { user, loading } = useAuth()
 
-    // On auth pages, render children directly — no sidebar, no auth check
+    // On auth pages or superadmin pages, render children directly — no standard sidebar
     const isAuthPage = pathname?.startsWith('/auth')
+    const isSuperadminPage = pathname?.startsWith('/superadmin')
 
     useEffect(() => {
-        // Once auth state is resolved and user is not logged in, redirect to /auth
-        if (!isAuthPage && !loading && !user) {
-            router.replace(`/auth?redirectTo=${encodeURIComponent(pathname || '/')}`)
-        }
-    }, [user, loading, isAuthPage, pathname, router])
+        if (!loading) {
+            // Once auth state is resolved and user is not logged in, redirect to /auth (unless it's a superadmin page)
+            if (!isAuthPage && !isSuperadminPage && !user) {
+                router.replace(`/auth?redirectTo=${encodeURIComponent(pathname || '/')}`)
+                return;
+            }
 
-    // On auth pages (/auth/*) always show without sidebar
-    if (isAuthPage) {
+            // If user is logged in as superadmin but goes to a normal workspace view, redirect to /superadmin
+            if (user && !isAuthPage && !isSuperadminPage) {
+                const isSuperadmin = user?.user_metadata?.is_superadmin === true || user?.app_metadata?.is_superadmin === true;
+                if (isSuperadmin) {
+                    router.replace('/superadmin');
+                }
+            }
+        }
+    }, [user, loading, isAuthPage, isSuperadminPage, pathname, router])
+
+    // On auth pages or superadmin pages always show without standard sidebar
+    if (isAuthPage || isSuperadminPage) {
         return <>{children}</>
     }
 

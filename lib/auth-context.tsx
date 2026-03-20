@@ -8,7 +8,7 @@ interface AuthContextType {
     user: User | null
     session: Session | null
     loading: boolean
-    signIn: (email: string, password: string) => Promise<{ error: any }>
+    signIn: (email: string, password: string, isSuperadmin?: boolean) => Promise<{ error: any }>
     signOut: () => Promise<void>
     resetPassword: (email: string) => Promise<{ error: any }>
 }
@@ -40,9 +40,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe()
     }, [])
 
-    const signIn = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        return { error }
+    const signIn = async (email: string, password: string, isSuperadmin = false) => {
+        try {
+            const { api } = await import('@/lib/api')
+            const baseUrl = 'https://dedalys-civ-dedalys-api.hf.space/api/v1'
+            const endpoint = isSuperadmin ? `${baseUrl}/auth/superadmin/login` : `${baseUrl}/auth/login`
+            
+            const response = await api.post(endpoint, { email, password })
+            const { access_token, refresh_token } = response.data
+            
+            if (!access_token || !refresh_token) {
+                 return { error: { message: "Identifiants invalides ou erreur serveur." } }
+            }
+
+            const { error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token
+            })
+
+            if (error) throw error;
+            return { error: null }
+        } catch (err: any) {
+            const message = err.response?.data?.detail || err.response?.data?.message || err.message || "Erreur lors de la connexion."
+            return { error: { message } }
+        }
     }
 
     const signOut = async () => {
