@@ -23,7 +23,7 @@ export default function EspacesPage() {
             try {
                 // Endpoint superadmin sur le backend FastAPI
                 const baseUrl = 'https://dedalys-civ-dedalys-api.hf.space/api/v1'
-                const response = await api.get(`${baseUrl}/espaces`)
+                const response = await api.get(`${baseUrl}/espaces/`)
                 // Gérer le format potentiellement paginé { data: [...] }
                 if (response.data?.data) {
                     setEspaces(response.data.data)
